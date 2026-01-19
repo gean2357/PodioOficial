@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carregando...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-container {
+            text-align: center;
+            color: white;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top: 6px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff6b6b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-width: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader-container">
+        <div class="loader"></div>
+        <h2>Verificando status do sistema...</h2>
+        <p id="statusText">Conectando ao Firebase...</p>
+        <div id="errorContainer"></div>
+    </div>
+
+   
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const statusText = document.getElementById('statusText');
+        const errorContainer = document.getElementById('errorContainer');
+
+        window.addEventListener('load', async () => {
+            try {
+                statusText.textContent = 'Inicializando Firebase...';
+
+                if (!initFirebase()) {
+                    throw new Error('Falha ao inicializar Firebase');
+                }
+
+                statusText.textContent = 'Verificando status de manutenção...';
+
+                
+                const data = await getPageStatus();
+
+                console.log('📊 Status obtido:', data);
+
+                
+                if (data && data.maintenance) {
+                    console.log('🔧 Modo manutenção ativo, redirecionando para manutencao.html');
+                    window.location.href = 'manutencao.html';
+                } else {
+                    console.log('✅ Sistema operacional, redirecionando para teste.html');
+                    window.location.href = 'teste.html';
+                }
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                statusText.textContent = 'Erro ao conectar';
+                errorContainer.innerHTML = `
+                    <div class="error">
+                        <strong>⚠️ Erro de Conexão</strong><br>
+                        ${error.message}<br><br>
+                        <small>Verifique se o Firebase está configurado corretamente em firebase-config.js</small>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+
+</html>

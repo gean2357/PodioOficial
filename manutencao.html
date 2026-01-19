@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Manutenção</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            text-align: center;
+            z-index: 1;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-code {
+            font-size: 150px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .error-title {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-message {
+            font-size: 20px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .maintenance-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #fff;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .info-box p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .loader {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-text {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-style: italic;
+        }
+
+        .glitch {
+            position: relative;
+            animation: glitch 5s infinite;
+        }
+
+        @keyframes glitch {
+
+            0%,
+            90%,
+            100% {
+                transform: translate(0);
+            }
+
+            92% {
+                transform: translate(-2px, 2px);
+            }
+
+            94% {
+                transform: translate(2px, -2px);
+            }
+
+            96% {
+                transform: translate(-2px, -2px);
+            }
+
+            98% {
+                transform: translate(2px, 2px);
+            }
+        }
+
+        .countdown {
+            font-size: 18px;
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .countdown span {
+            font-weight: bold;
+            color: #fff;
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="maintenance-icon">⚙️</div>
+        <div class="error-code glitch">404</div>
+        <h1 class="error-title">Sistema em Manutenção</h1>
+        <p class="error-message">
+            Desculpe pelo inconveniente! Estamos realizando melhorias no sistema.<br>
+            A página voltará em breve.
+        </p>
+
+        <div class="info-box">
+            <h3>🔧 O que está acontecendo?</h3>
+            <p>
+                Estamos implementando atualizações importantes para melhorar sua experiência.
+                Durante este período, o acesso ao sistema está temporariamente indisponível.
+            </p>
+        </div>
+
+        <div class="loader"></div>
+        <p class="status-text">Verificando status do sistema...</p>
+
+        <div class="countdown">
+            Próxima verificação em: <span id="countdown">5</span>s
+        </div>
+    </div>
+
+    <!-- Firebase SDK - Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 15 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+            particlesContainer.appendChild(particle);
+        }
+
+        // Inicializar Firebase
+        let isConnected = false;
+        let countdownValue = 5;
+        const countdownElement = document.getElementById('countdown');
+
+        window.addEventListener('load', () => {
+            console.log('🚀 Inicializando Firebase na página de manutenção...');
+
+            if (initFirebase()) {
+                isConnected = true;
+                console.log('✅ Firebase conectado! Monitorando status...');
+
+                listenToPageStatus((data) => {
+                    console.log('📥 Status recebido:', data);
+                    checkMaintenanceStatus(data);
+                });
+            } else {
+                console.error('❌ Erro ao conectar com Firebase');
+            }
+        });
+
+        function checkMaintenanceStatus(data) {
+            if (data && !data.maintenance) {
+                console.log('✅ Manutenção desativada, redirecionando...');
+                window.location.href = 'teste.html';
+            }
+        }
+
+        setInterval(() => {
+            countdownValue--;
+            countdownElement.textContent = countdownValue;
+
+            if (countdownValue <= 0) {
+                countdownValue = 5;
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>
