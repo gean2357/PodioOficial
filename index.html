@@ -4,729 +4,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pódio dos Técnicos</title>
+    <title>Pódio dos Técnicos v2</title>
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark-bg: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
         body {
-            background-color: #2a2a2a;
-            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
         }
 
-        .podium-step {
-            transition: all 0.3s ease;
+        h1,
+        h2,
+        h3,
+        .font-heading {
+            font-family: 'Outfit', sans-serif;
         }
 
-        .podium-step:hover {
+        /* Glassmorphism Utilities */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 16px;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
         }
 
-        .avatar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            border-radius: 50%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .laurel {
-            position: absolute;
-            top: -20px;
-            width: 100%;
-            height: 40px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20" fill="%23D4AF37"><path d="M20,10 Q50,20 80,10 Q50,0 20,10 Z"/></svg>');
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, .3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 50;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background-color: #333;
-            margin: 10% auto;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            position: relative;
-            animation: modalopen 0.4s;
-        }
-
-        @keyframes modalopen {
+        /* Podium Animations */
+        @keyframes slideUp {
             from {
+                transform: translateY(100px);
                 opacity: 0;
-                transform: translateY(-50px);
             }
 
             to {
-                opacity: 1;
                 transform: translateY(0);
+                opacity: 1;
             }
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 24px;
-            color: #888;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .close-modal:hover {
-            color: #555;
-        }
-
-        .input-field {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-field input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #444;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-            background-color: #444;
-            color: #fff;
-        }
-
-        .input-field input:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-            outline: none;
-        }
-
-        .input-field label {
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            background: #333;
-            padding: 0 5px;
-            font-size: 14px;
-            color: #6366f1;
-        }
-
-        .modal-btn {
-            width: 100%;
-            padding: 12px;
-            background-color: #6366f1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .modal-btn:hover {
-            background-color: #4f46e5;
-        }
-
-        .modal-title {
-            text-align: center;
-            margin-bottom: 25px;
-            color: #fff;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .modal-icon {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #6366f1;
-            font-size: 40px;
-        }
-
-        .podium-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 20px;
-            height: 500px;
-            margin-bottom: 20px;
-            margin-top: 20px;
         }
 
         .podium-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         .first-place {
-            height: 400px;
+            animation-delay: 0.2s;
         }
 
         .second-place {
-            height: 350px;
+            animation-delay: 0.4s;
         }
 
         .third-place {
-            height: 300px;
-        }
-
-        .podium-platform {
-            width: 220px;
-            border-radius: 8px 8px 0 0;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 20px;
+            animation-delay: 0.6s;
         }
 
         .podium-base {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-            height: 60px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.2));
+            backdrop-filter: blur(5px);
         }
 
-        .first-place .podium-base {
-            background-color: #FFD700;
+        /* Gradients for Ranks */
+        .rank-1-gradient {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
         }
 
-        .second-place .podium-base {
-            background-color: #C0C0C0;
+        .rank-2-gradient {
+            background: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%);
+            box-shadow: 0 0 25px rgba(192, 192, 192, 0.2);
         }
 
-        .third-place .podium-base {
-            background-color: #CD7F32;
-        }
-
-        .gold-gradient {
-            background: linear-gradient(135deg, #FFD700 0%, #D4AF37 100%);
-        }
-
-        .silver-gradient {
-            background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%);
-        }
-
-        .bronze-gradient {
+        .rank-3-gradient {
             background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+            box-shadow: 0 0 20px rgba(205, 127, 50, 0.2);
         }
 
-        .podium-platform::before {
+        .avatar-glow {
+            position: relative;
+        }
+
+        .avatar-glow::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(45deg, #6366f1, #a855f7);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            pointer-events: none;
+        }
+
+        /* Technician List */
+        .tech-list-item {
+            transition: all 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tech-list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            padding-left: 1rem;
+        }
+
+        /* Carousel Styles */
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            padding: 20px 0;
+            /* Add padding to prevent cutoff */
+        }
+
+        .carousel-track:hover {
+            animation-play-state: paused;
+        }
+
+        .podium-card {
+            width: 260px;
+            flex-shrink: 0;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            margin: 0 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .podium-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        .glow {
-            box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.6);
-            animation: glow-pulse 2s infinite alternate;
-        }
-
-        @keyframes glow-pulse {
-            from {
-                box-shadow: 0 0 10px 5px rgba(255, 215, 0, 0.4);
-            }
-
-            to {
-                box-shadow: 0 0 25px 10px rgba(255, 215, 0, 0.8);
-            }
-        }
-
-        .trophy-icon {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 1.5rem;
-        }
-
-        .confetti-container {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 10;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
         }
 
-        .progress-container {
-            width: 100%;
-            background-color: #444;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 20px;
-            border-radius: 8px;
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding-right: 10px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-        }
-
-        .progress-completed {
-            background-color: #10b981;
-        }
-
-        .progress-pending {
-            background-color: #ef4444;
-        }
-
-        .configurations-container {
-            background-color: #333;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            margin-right: 20px;
-            flex: 1;
-        }
-
-        .config-header {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #6366f1;
-            text-align: center;
-        }
-
-        .config-section {
-            margin-bottom: 30px;
-        }
-
-        .config-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #fff;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 5px;
-        }
-
-        .config-list {
-            max-height: 300px;
-            overflow-y: auto;
-            padding-right: 10px;
-        }
-
-        .config-item {
-            background-color: #444;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .config-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .config-name {
-            font-weight: 500;
-        }
-
-        .config-status {
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .completed {
-            background-color: #10b981;
-            color: white;
-            animation: neon-green 1.5s infinite alternate;
-        }
-
-        .pending {
-            background-color: #ef4444;
-            color: white;
-            animation: neon-red 1.5s infinite alternate;
-        }
-
-        @keyframes neon-green {
-            from {
-                box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-            }
-
-            to {
-                box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
-            }
-        }
-
-        @keyframes neon-red {
-            from {
-                box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
-            }
-
-            to {
-                box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
-            }
-        }
-
-        .config-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .config-list::-webkit-scrollbar-track {
-            background: #444;
-            border-radius: 10px;
-        }
-
-        .config-list::-webkit-scrollbar-thumb {
-            background: #6366f1;
-            border-radius: 10px;
-        }
-
-        .config-list::-webkit-scrollbar-thumb:hover {
-            background: #4f46e5;
-        }
-
-        .main-content-container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        .left-panel {
-            flex: 1;
-            position: relative;
-        }
-
-        .right-panel {
-            width: 60%;
-        }
-
-        .stats-card {
-            background-color: #333;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .stats-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-        }
-
-        .stats-title i {
-            margin-right: 10px;
-            color: #6366f1;
-        }
-
-        .stats-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 5px;
-        }
-
-        .stats-description {
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        .update-timer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #4f46e5;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-        }
-
-        .update-timer i {
-            margin-right: 8px;
-        }
-
-        .online-badge {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: #10b981;
-            border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
+        /* Floating Animation */
+        @keyframes float {
             0% {
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+                transform: translateY(0px);
             }
 
-            70% {
-                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            50% {
+                transform: translateY(-10px);
             }
 
             100% {
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+                transform: translateY(0px);
             }
         }
 
-        .carousel-container {
-            width: 100%;
-            overflow: hidden;
-            margin: 30px 0;
-            position: relative;
+        .float-anim {
+            animation: float 6s ease-in-out infinite;
         }
 
-        .carousel-track {
-            display: flex;
-            transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
-            align-items: center;
-            height: 350px;
-        }
 
-        .carousel-slide {
-            min-width: 100%;
-            padding: 0 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .carousel-nav {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .carousel-dot {
-            width: 12px;
-            height: 12px;
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #6366f1;
             border-radius: 50%;
-            background-color: #555;
-            margin: 0 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
         }
 
-        .carousel-dot.active {
-            background-color: #6366f1;
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
-        .carousel-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
+
+        .modal {
+            transition: opacity 0.3s ease;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
+            display: inline-block;
         }
 
-        .carousel-btn:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-            transform: translateY(-50%) scale(1.1);
+        .status-success {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
         }
 
-        .carousel-btn.prev {
-            left: 10px;
+        .status-pending {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
         }
 
-        .carousel-btn.next {
-            right: 10px;
-        }
-
-        .carousel-wrapper {
-            position: relative;
-            width: 100%;
-        }
-
-        .podium-purple {
-            background: linear-gradient(135deg, #8A2BE2 0%, #9932CC 100%);
-        }
-
-        .podium-blue {
-            background: linear-gradient(135deg, #1E90FF 0%, #4169E1 100%);
-        }
-
-        .podium-green {
-            background: linear-gradient(135deg, #2E8B57 0%, #3CB371 100%);
-        }
-
-        .podium-red {
-            background: linear-gradient(135deg, #FF4500 0%, #DC143C 100%);
-        }
-
-        .podium-orange {
-            background: linear-gradient(135deg, #FF8C00 0%, #FFA500 100%);
-        }
-
-        .podium-pink {
-            background: linear-gradient(135deg, #FF69B4 0%, #DB7093 100%);
-        }
-
-        .podium-teal {
-            background: linear-gradient(135deg, #008080 0%, #20B2AA 100%);
-        }
-
-        .podium-indigo {
-            background: linear-gradient(135deg, #4B0082 0%, #6A5ACD 100%);
-        }
-
-        .podium-card {
-            width: 280px;
-            height: 350px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding-bottom: 20px;
-            position: relative;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            margin: 0 auto;
-            transition: transform 0.5s ease, opacity 0.5s ease;
-            transform: scale(0.9);
-            opacity: 0.7;
-        }
-
-        .podium-card.active {
-            transform: scale(1);
-            opacity: 1;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-        }
-
-        .podium-card-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 15px;
-            font-size: 28px;
-        }
-
-        .podium-card-name {
-            font-weight: bold;
-            font-size: 22px;
-            color: white;
-            margin-bottom: 5px;
-            text-align: center;
-            padding: 0 10px;
-        }
-
-        .podium-card-count {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 15px;
-        }
-
-        .podium-card-position {
-            width: 100%;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 22px;
-            border-radius: 0 0 8px 8px;
-        }
-
-        .podium-cards-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-top: 40px;
-        }
-
-        .auto-rotate-indicator {
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            color: #888;
-            display: flex;
-            align-items: center;
-        }
-
-        .auto-rotate-indicator i {
-            margin-right: 5px;
-        }
 
         #wifi-container {
             position: absolute;
@@ -737,386 +254,484 @@
             z-index: 10;
         }
 
-        @media (max-width: 1024px) {
-            .main-content-container {
-                flex-direction: column;
-            }
-
-            .right-panel {
-                width: 100%;
-            }
-
-            .podium-container {
-                height: auto;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .podium-item {
-                margin-bottom: 20px;
-            }
-
-            .first-place,
-            .second-place,
-            .third-place {
-                height: 300px;
-            }
-
-            .carousel-track {
-                height: 300px;
-            }
-        }
-
-        .technicians-list-container {
-            background-color: #333;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-            height: 400px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .technicians-list-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .technicians-list-title i {
-            color: #6366f1;
-            margin-right: 10px;
-        }
-
-        .technicians-list {
-            height: 350px;
-            overflow-y: hidden;
-            position: relative;
-        }
 
         .technicians-scroll-container {
             position: absolute;
             width: 100%;
-            animation: scrollTechnicians 30s linear infinite;
         }
 
-        @keyframes scrollTechnicians {
+        @keyframes scrollSmooth {
             0% {
                 transform: translateY(0);
             }
 
             100% {
-                transform: translateY(calc(-100% + 350px));
+                transform: translateY(-50%);
             }
         }
 
-        .technician-item {
-            background-color: #444;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
+
+        .btn-neon {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #7c3aed, #4f46e5);
+            z-index: -1;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        .btn-neon:hover::before {
+            opacity: 1;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+            transform: translateY(-2px);
+        }
+
+
+        @keyframes rotate-maintenance {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        @keyframes scrollLeft {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        /* Rank Notification Styles */
+        #rankNotificationContainer {
+            position: fixed;
+            top: 100px;
+            right: 0;
+            z-index: 100;
+            pointer-events: none;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 20px;
         }
 
-        .technician-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        .notification-card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-left: 4px solid #facc15;
+            /* Gold border */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 16px 24px;
+            width: 320px;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
         }
 
-        .technician-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-color: #555;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            margin-right: 10px;
+        .notification-card.show {
+            transform: translateX(0);
         }
 
-        .technician-name {
-            flex: 1;
-            font-weight: 500;
-            color: #fff;
+        .notification-card.hide {
+            transform: translateX(-150%);
+            /* Slide out to left */
+            opacity: 0;
+            transition: transform 0.5s ease-in, opacity 0.3s ease;
         }
 
-        .technician-count {
-            font-weight: bold;
-            color: #fff;
-            min-width: 60px;
-            text-align: right;
-            margin-right: 10px;
+        .notification-shimmer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+            transform: skewX(-20deg) translateX(-150%);
+            animation: shimmer 1.5s infinite;
         }
 
-        .technician-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .status-completed {
-            background-color: #10b981;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
-        }
-
-        .status-pending {
-            background-color: #ef4444;
-            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
-        }
-
-        .daily-goal {
-            display: inline-block;
-            background-color: #6366f1;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            margin-left: 10px;
+        @keyframes shimmer {
+            100% {
+                transform: skewX(-20deg) translateX(150%);
+            }
         }
     </style>
 </head>
 
-<body class="font-sans min-h-screen">
+<body class="antialiased selection:bg-indigo-500 selection:text-white">
 
 
-    <header class="bg-indigo-800 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Pódio dos Técnicos</h1>
-            <div class="flex gap-2">
+    <header class="relative w-full z-50 glass-panel square-bottom border-t-0 border-x-0 rounded-none bg-opacity-80">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-trophy text-white text-lg"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">
+                    Pódio dos <span class="text-indigo-400">Técnicos</span>
+                </h1>
+            </div>
+
+            <div class="flex gap-4 items-center">
                 <button id="voiceToggleBtn"
-                    class="bg-gray-600 hover:bg-gray-500 text-white font-medium py-2 px-4 rounded-md flex items-center transition-colors">
-                    <i class="fas fa-volume-mute mr-2" id="voiceIcon"></i>
+                    class="px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 text-gray-300 hover:text-white hover:bg-gray-700/50 transition-all flex items-center gap-2 text-sm font-medium">
+                    <i class="fas fa-volume-mute" id="voiceIcon"></i>
                     <span id="voiceBtnText">Voz: Off</span>
                 </button>
+
                 <button id="loadDataBtn"
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-md flex items-center">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    <span id="loadBtnText">Carregar Dados</span>
-                    <span id="loadSpinner" class="loading-spinner hidden ml-2"></span>
+                    class="btn-neon px-5 py-2 rounded-lg text-white font-semibold text-sm shadow-lg flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="loadBtnText">Atualizar</span>
+                    <span id="loadSpinner" class="spinner hidden"></span>
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto p-4">
-        <!-- Google Sheets URL  -->
-        <div class="bg-gray-700 rounded-lg shadow p-4 mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">URL do Google Sheets</label>
-                    <input type="text" id="googleSheetsUrl" placeholder="Cole a URL pública do Google Sheets"
-                        class="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-600 text-white">
+
+    <main class="container mx-auto px-4 py-8">
+
+
+        <div id="wifi-container" class="opacity-50 hover:opacity-100 transition-opacity duration-500"></div>
+
+
+        <div id="urlInputSection"
+            class="glass-panel p-6 mb-8 max-w-4xl mx-auto transform transition-all hover:scale-[1.01]">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">URL do
+                        Google Sheets</label>
+                    <div class="relative">
+                        <i class="fas fa-link absolute left-4 top-3.5 text-gray-500"></i>
+                        <input type="text" id="googleSheetsUrl" placeholder="Cole sua URL pública aqui..."
+                            class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-200 outline-none transition-all placeholder-gray-600">
+                    </div>
                 </div>
-                <div class="flex items-end">
-                    <button id="loadFromUrlBtn"
-                        class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-md h-10 flex items-center">
-                        <i class="fas fa-link mr-2"></i> Carregar
-                    </button>
-                </div>
+                <button id="loadFromUrlBtn"
+                    class="w-full md:w-auto px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-medium border border-gray-700 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-cloud-download-alt text-indigo-400"></i>
+                    Carregar
+                </button>
             </div>
-            <p class="text-sm text-gray-400 mt-2">A planilha deve conter colunas com os nomes "Atendente Call" e
-                "Configurado"</p>
         </div>
 
-        <div id="podiumContainer" class="hidden">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-white mb-2">Destaques e Configurações</h2>
-                <div class="flex justify-center items-center gap-4 mt-4">
-                    <label for="filialFilter" class="text-gray-300 font-medium">Filtrar por Filial:</label>
+
+        <div id="emptyState" class="glass-panel p-16 text-center max-w-2xl mx-auto mt-10">
+            <div
+                class="w-24 h-24 bg-gradient-to-br from-gray-800 to-gray-900 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl ring-1 ring-white/10 float-anim">
+                <i class="fas fa-chart-bar text-4xl text-gray-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-3">Aguardando Dados</h2>
+            <p class="text-gray-400 mb-8 max-w-md mx-auto">Insira a URL da planilha acima para visualizar o ranking em
+                tempo real e as estatísticas.</p>
+            <button id="loadDataBtn2"
+                class="btn-neon px-8 py-3 rounded-xl text-white font-bold shadow-xl inline-flex items-center gap-3 group">
+                <span id="loadBtnText2">Carregar Exemplo</span>
+                <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                <span id="loadSpinner2" class="spinner hidden"></span>
+            </button>
+        </div>
+
+
+        <div id="podiumContainer" class="hidden animate-fade-in">
+
+
+            <div class="flex justify-center mb-8">
+                <div class="glass-panel px-4 py-2 inline-flex items-center gap-3">
+                    <label for="filialFilter" class="text-sm text-gray-400 font-medium">Filial:</label>
                     <select id="filialFilter"
-                        class="bg-gray-700 text-white border border-gray-600 rounded-md px-4 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="all">Geral (Todas as Filiais)</option>
+                        class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+                        <option value="all">Todas as Filiais</option>
                     </select>
                 </div>
             </div>
 
-            <div class="main-content-container">
-                <div class="left-panel">
-                    <div class="stats-grid grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="stats-card">
-                            <div class="stats-title">
-                                <i class="fas fa-check-circle"></i>
-                                Configurações Concluídas
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+
+                <div class="lg:col-span-4 space-y-6">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass-card p-4 rounded-2xl">
+                            <div class="text-xs text-gray-400 mb-1">Configurados</div>
+                            <div class="text-2xl font-bold text-emerald-400" id="completedCount">0</div>
+                            <div class="text-xs text-gray-500 mt-1">Concluídos com sucesso</div>
+                        </div>
+                        <div class="glass-card p-4 rounded-2xl">
+                            <div class="text-xs text-gray-400 mb-1">Refeitos</div>
+                            <div class="text-2xl font-bold text-amber-500" id="pendingCount">0</div>
+                            <div class="text-xs text-gray-600 mt-2">Atenção necessária</div>
+                        </div>
+                        <div class="glass-card p-4 rounded-2xl col-span-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-xs text-gray-400">O.S Abertas</div>
+                                <i class="fas fa-folder-open text-indigo-500/50"></i>
                             </div>
-                            <div class="stats-value" id="completedCount">0</div>
-                            <div class="stats-description">Total de configurações finalizadas</div>
+                            <div class="text-3xl font-bold text-white relative z-10" id="activeTechnicians">0</div>
+                            <div class="text-xs text-gray-500 mt-1">Total geral processado</div>
                         </div>
 
-                        <div class="stats-card">
-                            <div class="stats-title">
-                                <i class="fas fa-redo"></i>
-                                Configurações Refeitas
-                            </div>
-                            <div class="stats-value" id="pendingCount">0</div>
-                            <div class="stats-description">Refeito configuração - Quantidade refeita</div>
-                        </div>
 
-                        <div class="stats-card">
-                            <div class="stats-title">
-                                <i class="fas fa-chart-line"></i>
-                                Progresso Total
+                        <div class="glass-card p-4 rounded-2xl col-span-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-xs text-gray-400">Progresso Total</div>
+                                <i class="fas fa-chart-pie text-emerald-500/50"></i>
                             </div>
-                            <div class="progress-container">
-                                <div class="progress-bar progress-completed" id="totalProgressBar" style="width: 0%">0%
-                                </div>
-                            </div>
-                            <div class="stats-description mt-2" id="progressDescription">0 de 21742 configurações
-                                concluídas</div>
-                        </div>
-
-                        <div class="stats-card">
-                            <div class="stats-title">
-                                <i class="fas fa-folder-open"></i>
-                                O.S ABERTA
-                            </div>
-                            <div class="stats-value" id="activeTechnicians">0</div>
-                            <div class="stats-description">Quantidade de O.S abertas</div>
-                        </div>
-                    </div>
-
-                    <div class="technicians-list-container">
-                        <div class="technicians-list-title">
                             <div>
-                                <i class="fas fa-list-ol"></i>
-                                Lista de Técnicos
-                                <span class="daily-goal">Configurados</span>
+                                <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>Concluído (Meta: 57.317)</span>
+                                    <span id="progressDescription">0%</span>
+                                </div>
+                                <div class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+                                    <div id="totalProgressBar"
+                                        class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full transition-all duration-1000"
+                                        style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="technicians-list">
-                            <div class="technicians-scroll-container" id="techniciansScrollContainer">
+                    </div>
+
+
+                    <div class="glass-panel overflow-hidden h-[500px] flex flex-col">
+                        <div
+                            class="p-4 border-b border-gray-700/50 bg-gray-900/40 backdrop-blur flex justify-between items-center z-10">
+                            <h3 class="font-bold text-gray-200 flex items-center gap-2">
+                                <i class="fas fa-list-ol text-indigo-400"></i> Ranking Geral
+                            </h3>
+                            <span class="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">Ao Vivo</span>
+                        </div>
+                        <div class="relative flex-1 bg-gray-900/20 overflow-hidden technicians-list"
+                            id="techniciansListRef">
+                            <div class="technicians-scroll-container px-2 py-2 w-full" id="techniciansScrollContainer">
+
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="right-panel">
-                    <div class="podium-container">
-                        <div class="podium-item second-place" id="secondPlaceContainer">
-                            <div class="confetti-container" id="secondConfetti"></div>
-                            <div class="podium-platform silver-gradient relative">
-                                <div class="laurel"></div>
-                                <div class="trophy-icon">
-                                    <i class="fas fa-medal"></i>
+
+                <div class="lg:col-span-8 flex flex-col">
+
+
+                    <div class="flex-1 flex items-end justify-center gap-4 md:gap-8 pb-12 pt-8 min-h-[450px]">
+
+
+                        <div id="secondPlaceContainer"
+                            class="podium-item second-place flex flex-col items-center w-1/3 max-w-[220px]">
+                            <div class="relative mb-4 group cursor-pointer">
+                                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-700 border-4 border-gray-400 shadow-[0_0_20px_rgba(192,192,192,0.3)] flex items-center justify-center text-2xl font-bold text-white z-10 relative overflow-hidden"
+                                    id="secondPlaceAvatar">
+                                    --
                                 </div>
-                                <div class="avatar w-24 h-24 mb-4 text-3xl" id="secondPlaceAvatar">--</div>
-                                <span class="font-bold text-gray-800 text-xl" id="secondPlaceName">--</span>
-                                <span class="text-md text-gray-700 font-medium" id="secondPlaceCount">0
-                                    configurações</span>
+                                <div
+                                    class="absolute -top-8 left-1/2 -translate-x-1/2 text-3xl opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-y-2">
+                                    🥈</div>
                             </div>
-                            <div class="podium-base">
-                                <span class="podium-number">2º Lugar</span>
+                            <div class="text-center mb-2 relative z-10">
+                                <div class="font-bold text-white text-lg md:text-xl truncate w-full px-2"
+                                    id="secondPlaceName">--</div>
+                                <div class="text-gray-400 text-sm font-medium" id="secondPlaceCount">0 configs</div>
+                            </div>
+                            <div
+                                class="w-full h-48 md:h-56 rank-2-gradient rounded-t-lg mx-auto relative group overflow-hidden">
+                                <div
+                                    class="absolute inset-0 bg-white/20 transform skew-y-12 translate-y-full group-hover:translate-y-0 transition-transform duration-700">
+                                </div>
+                                <div
+                                    class="absolute bottom-4 w-full text-center text-gray-800 font-bold text-4xl opacity-50">
+                                    2</div>
                             </div>
                         </div>
 
-                        <div class="podium-item first-place" id="firstPlaceContainer">
-                            <div class="confetti-container" id="firstConfetti"></div>
-                            <div class="podium-platform gold-gradient relative glow">
-                                <div class="laurel"></div>
-                                <div class="trophy-icon">
-                                    <i class="fas fa-crown"></i>
+
+                        <div id="firstPlaceContainer"
+                            class="podium-item first-place flex flex-col items-center w-1/3 max-w-[240px] z-20 -mt-12">
+                            <i
+                                class="fas fa-crown text-amber-400 text-4xl mb-4 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)] float-anim"></i>
+                            <div class="relative mb-6">
+                                <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.4)] flex items-center justify-center text-4xl font-bold text-white z-10 relative overflow-hidden"
+                                    id="firstPlaceAvatar">
+                                    --
                                 </div>
-                                <div class="avatar w-28 h-28 mb-4 text-4xl" id="firstPlaceAvatar">--</div>
-                                <span class="font-bold text-gray-800 text-2xl" id="firstPlaceName">--</span>
-                                <span class="text-lg text-gray-700 font-medium" id="firstPlaceCount">0
-                                    configurações</span>
+                                <div class="absolute -inset-4 bg-amber-500/20 rounded-full blur-xl -z-10 animate-pulse">
+                                </div>
                             </div>
-                            <div class="podium-base">
-                                <span class="podium-number">1º Lugar</span>
+                            <div class="text-center mb-2 relative z-10">
+                                <div class="font-bold text-white text-xl md:text-2xl truncate w-full px-2"
+                                    id="firstPlaceName">--</div>
+                                <div class="text-amber-400 text-base font-bold" id="firstPlaceCount">0 configs</div>
+                            </div>
+                            <div
+                                class="w-full h-64 md:h-72 rank-1-gradient rounded-t-lg mx-auto relative group overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                                <div
+                                    class="absolute bottom-4 w-full text-center text-amber-900 font-bold text-5xl opacity-40">
+                                    1</div>
                             </div>
                         </div>
 
-                        <div class="podium-item third-place" id="thirdPlaceContainer">
-                            <div class="confetti-container" id="thirdConfetti"></div>
-                            <div class="podium-platform bronze-gradient relative">
-                                <div class="laurel"></div>
-                                <div class="trophy-icon">
-                                    <i class="fas fa-award"></i>
+
+                        <div id="thirdPlaceContainer"
+                            class="podium-item third-place flex flex-col items-center w-1/3 max-w-[220px]">
+                            <div class="relative mb-4 group">
+                                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-700 border-4 border-orange-700 shadow-[0_0_20px_rgba(160,82,45,0.3)] flex items-center justify-center text-2xl font-bold text-white z-10 relative overflow-hidden"
+                                    id="thirdPlaceAvatar">
+                                    --
                                 </div>
-                                <div class="avatar w-20 h-20 mb-3 text-2xl" id="thirdPlaceAvatar">--</div>
-                                <span class="font-bold text-gray-800 text-lg" id="thirdPlaceName">--</span>
-                                <span class="text-sm text-gray-700 font-medium" id="thirdPlaceCount">0
-                                    configurações</span>
                             </div>
-                            <div class="podium-base">
-                                <span class="podium-number">3º Lugar</span>
+                            <div class="text-center mb-2 relative z-10">
+                                <div class="font-bold text-white text-lg md:text-xl truncate w-full px-2"
+                                    id="thirdPlaceName">--</div>
+                                <div class="text-gray-400 text-sm font-medium" id="thirdPlaceCount">0 configs</div>
+                            </div>
+                            <div
+                                class="w-full h-40 md:h-48 rank-3-gradient rounded-t-lg mx-auto relative group overflow-hidden">
+                                <div
+                                    class="absolute bottom-4 w-full text-center text-orange-900 font-bold text-4xl opacity-50">
+                                    3</div>
                             </div>
                         </div>
+
                     </div>
 
-                    <div class="carousel-wrapper">
-                        <h3 class="text-xl font-semibold text-white mb-4 text-center">Outros Técnicos</h3>
-                        <div class="carousel-container">
-                            <div class="carousel-track" id="techniciansCarousel">
+
+                    <div class="mt-8 relative px-12">
+
+                        <button
+                            class="carousel-btn prev absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-800 hover:bg-indigo-600 text-white flex items-center justify-center transition-all z-20 shadow-lg">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+
+                        <div class="overflow-hidden w-full h-[240px]" id="techniciansCarouselContainer">
+                            <div class="carousel-track h-full items-center" id="techniciansCarousel">
+
                             </div>
-                            <button class="carousel-btn prev">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <button class="carousel-btn next">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
                         </div>
-                        <div class="auto-rotate-indicator">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>Passagem automática ativada</span>
-                        </div>
+
+                        <button
+                            class="carousel-btn next absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-800 hover:bg-indigo-600 text-white flex items-center justify-center transition-all z-20 shadow-lg">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
+
                 </div>
             </div>
-        </div>
-
-        <div id="emptyState" class="bg-gray-700 rounded-xl shadow-md p-8 text-center mt-8">
-            <div class="text-indigo-500 mb-4">
-                <i class="fas fa-trophy text-5xl"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-white mb-2">Pódio dos Técnicos</h2>
-            <p class="text-gray-400 mb-6">Carregue os dados da planilha para visualizar o ranking dos técnicos com mais
-                configurações realizadas.</p>
-            <button id="loadDataBtn2"
-                class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg shadow cursor-pointer transition duration-300 inline-flex items-center">
-                <i class="fas fa-link mr-2"></i>
-                <span id="loadBtnText2">Carregar Dados</span>
-                <span id="loadSpinner2" class="loading-spinner hidden ml-2"></span>
-            </button>
         </div>
     </main>
 
-    <div id="updateTimer" class="update-timer hidden">
-        <i class="fas fa-clock"></i>
-        <span id="timerText">Próxima atualização em 5:00</span>
+
+    <div id="updateTimer" class="fixed bottom-6 right-6 hidden z-50">
+        <div
+            class="glass-panel px-4 py-2 flex items-center gap-3 bg-gray-900/90 border-indigo-500/30 shadow-lg shadow-indigo-500/20">
+            <span class="relative flex h-3 w-3">
+                <span
+                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+            </span>
+            <span id="timerText" class="text-gray-300 text-sm font-mono font-medium">--:--</span>
+        </div>
     </div>
 
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="modal-icon">
-                <i class="fas fa-lock"></i>
+    <!-- Rank Notification Container -->
+    <div id="rankNotificationContainer"></div>
+
+
+
+    <div id="loginModal" class="modal fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div
+            class="glass-platform bg-gray-900 border border-gray-700 rounded-2xl p-8 max-w-sm w-full relative shadow-2xl transform transition-all scale-100">
+            <button class="close-modal absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lock text-2xl text-indigo-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Acesso Restrito</h2>
             </div>
-            <h2 class="modal-title">Acesso Restrito</h2>
-            <form id="loginForm">
-                <div class="input-field">
-                    <input type="text" id="username" required>
-                    <label for="username">Usuário</label>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Usuário</label>
+                    <input type="text" id="username"
+                        class="w-full bg-gray-800 border-none rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500"
+                        required>
                 </div>
-                <div class="input-field">
-                    <input type="password" id="password" required>
-                    <label for="password">Senha</label>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Senha</label>
+                    <input type="password" id="password"
+                        class="w-full bg-gray-800 border-none rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500"
+                        required>
                 </div>
-                <button type="submit" class="modal-btn">
-                    Entrar
-                </button>
+                <button type="submit" class="w-full py-3 btn-neon rounded-lg text-white font-bold mt-2">Entrar</button>
             </form>
         </div>
     </div>
+
+
+    <div id="alertModal"
+        class="modal fixed inset-0 z-[110] hidden flex items-center justify-center p-4 backdrop-blur-md">
+        <div
+            class="relative bg-gradient-to-br from-indigo-900 to-purple-900 border border-white/10 rounded-3xl p-8 max-w-lg w-full shadow-2xl shadow-purple-500/20 transform transition-all scale-100 text-center">
+            <button onclick="closeAlertModal()"
+                class="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="mb-6">
+                <div
+                    class="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto animate-bounce text-4xl">
+                    🔔
+                </div>
+            </div>
+            <h2 id="alertModalTitle" class="text-3xl font-bold text-white mb-4">Atenção</h2>
+            <p id="alertModalMessage" class="text-lg text-gray-200 leading-relaxed mb-8">Mensagem de alerta...</p>
+            <button onclick="closeAlertModal()"
+                class="px-8 py-3 bg-white text-indigo-900 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+                OK, Entendi
+            </button>
+        </div>
+    </div>
+
+
+    <div id="maintenanceOverlay"
+        class="fixed inset-0 z-[120] bg-black/95 hidden flex flex-col justify-center items-center text-center p-8 backdrop-blur-xl">
+        <div class="text-6xl mb-8 animate-[rotate-maintenance_4s_linear_infinite]">⚙️</div>
+        <h2 id="maintenanceTitle" class="text-4xl font-bold text-white mb-4 tracking-tight">Sistema em Manutenção</h2>
+        <p id="maintenanceMessage" class="text-xl text-gray-400 max-w-xl leading-relaxed">Estamos realizando melhorias
+            no sistema. Por favor, aguarde alguns instantes.</p>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -1129,6 +744,7 @@
                 loadSpinner2: document.getElementById('loadSpinner2'),
                 googleSheetsUrl: document.getElementById('googleSheetsUrl'),
                 loadFromUrlBtn: document.getElementById('loadFromUrlBtn'),
+                urlInputSection: document.getElementById('urlInputSection'),
                 podiumContainer: document.getElementById('podiumContainer'),
                 emptyState: document.getElementById('emptyState'),
                 firstPlaceAvatar: document.getElementById('firstPlaceAvatar'),
@@ -1159,7 +775,6 @@
                 prevBtn: document.querySelector('.carousel-btn.prev'),
                 nextBtn: document.querySelector('.carousel-btn.next'),
                 wifiContainer: document.getElementById('wifi-container'),
-                wifiContainer: document.getElementById('wifi-container'),
                 techniciansScrollContainer: document.getElementById('techniciansScrollContainer'),
                 voiceToggleBtn: document.getElementById('voiceToggleBtn'),
                 voiceIcon: document.getElementById('voiceIcon'),
@@ -1174,106 +789,108 @@
                 updateTimerInterval: null,
                 currentSlide: 0,
                 carouselSlides: [],
-                totalConfigurations: 57317, // Total fixo de configurações
+                totalConfigurations: 57317,
                 autoRotateInterval: null,
                 autoRotateTime: 5000,
                 dailyGoal: 27,
                 rawData: [],
                 voiceEnabled: false,
-                previousRankings: new Map()
+                rawData: [],
+                voiceEnabled: false,
+                previousRankings: new Map(),
+                filiais: new Set(),
+                notificationQueue: [],
+                isShowingNotification: false
             };
 
             function initWiFiSymbol() {
                 const container = elements.wifiContainer;
-                const width = container.clientWidth;
-                const height = container.clientHeight;
 
-                const scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x2a2a2a);
+                if (!container) return;
 
-                const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-                camera.position.z = 5;
+                const width = container.clientWidth || 100;
+                const height = container.clientHeight || 100;
 
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(width, height);
-                container.appendChild(renderer.domElement);
+                try {
+                    const scene = new THREE.Scene();
 
-                const createArc = (radius, yPos, color) => {
-                    const arcShape = new THREE.Shape();
-                    arcShape.absarc(0, yPos, radius, 0, Math.PI * 2, false);
 
-                    const geometry = new THREE.ShapeGeometry(arcShape);
-                    const material = new THREE.MeshBasicMaterial({
-                        color: color,
-                        side: THREE.DoubleSide,
-                        wireframe: true,
-                        wireframeLinewidth: 3
+                    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+                    camera.position.z = 5;
+
+                    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                    renderer.setSize(width, height);
+                    container.appendChild(renderer.domElement);
+
+                    const createArc = (radius, yPos, color) => {
+                        const arcShape = new THREE.Shape();
+                        arcShape.absarc(0, yPos, radius, 0, Math.PI * 2, false);
+
+                        const geometry = new THREE.ShapeGeometry(arcShape);
+                        const material = new THREE.MeshBasicMaterial({
+                            color: color,
+                            side: THREE.DoubleSide,
+                            wireframe: true,
+                            wireframeLinewidth: 2
+                        });
+
+                        const arc = new THREE.Mesh(geometry, material);
+                        arc.rotation.x = Math.PI / 2;
+                        return arc;
+                    };
+
+
+                    const color = 0x6366f1;
+                    const arcs = [
+                        { radius: 0.8, yPos: 0, color: color },
+                        { radius: 0.6, yPos: 0, color: color },
+                        { radius: 0.4, yPos: 0, color: color },
+                        { radius: 0.2, yPos: 0, color: color }
+                    ];
+
+                    arcs.forEach(arc => {
+                        scene.add(createArc(arc.radius, arc.yPos, arc.color));
                     });
 
-                    const arc = new THREE.Mesh(geometry, material);
-                    arc.rotation.x = Math.PI / 2;
-                    return arc;
-                };
 
-                const arcs = [
-                    { radius: 0.8, yPos: 0, color: 0x10b981 },
-                    { radius: 0.6, yPos: 0, color: 0x10b981 },
-                    { radius: 0.4, yPos: 0, color: 0x10b981 },
-                    { radius: 0.2, yPos: 0, color: 0x10b981 }
-                ];
+                    const dotGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+                    const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                    scene.add(dot);
 
-                arcs.forEach(arc => {
-                    scene.add(createArc(arc.radius, arc.yPos, arc.color));
-                });
+                    let time = 0;
+                    const animate = () => {
+                        requestAnimationFrame(animate);
+                        time += 0.02;
+                        scene.rotation.y = time * 0.5;
+                        scene.rotation.x = Math.sin(time * 0.5) * 0.2;
+                        renderer.render(scene, camera);
+                    };
 
-                const dotGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-                const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-                const dot = new THREE.Mesh(dotGeometry, dotMaterial);
-                scene.add(dot);
-
-                const glowGeometry = new THREE.SphereGeometry(0.15, 16, 16);
-                const glowMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x10b981,
-                    transparent: true,
-                    opacity: 0.5
-                });
-                const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-                scene.add(glow);
-
-                let time = 0;
-                const animate = () => {
-                    requestAnimationFrame(animate);
-
-                    time += 0.01;
-                    glow.scale.set(1 + Math.sin(time) * 0.2, 1 + Math.sin(time) * 0.2, 1);
-
-                    renderer.render(scene, camera);
-                };
-
-                animate();
-
-                window.addEventListener('resize', () => {
-                    camera.aspect = container.clientWidth / container.clientHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(container.clientWidth, container.clientHeight);
-                });
+                    animate();
+                } catch (e) {
+                    console.log('Error init wifi (Three.js might not be loaded):', e);
+                }
             }
 
+
+
             function initEventListeners() {
-                elements.loadDataBtn.addEventListener('click', loadData);
-                elements.loadDataBtn2.addEventListener('click', loadData);
-                elements.loadFromUrlBtn.addEventListener('click', loadFromUrl);
+                if (elements.loadDataBtn) elements.loadDataBtn.addEventListener('click', loadData);
+                if (elements.loadDataBtn2) elements.loadDataBtn2.addEventListener('click', loadData);
+                if (elements.loadFromUrlBtn) elements.loadFromUrlBtn.addEventListener('click', loadFromUrl);
 
-                // Google Sheets URL 
-                elements.googleSheetsUrl.addEventListener('input', function (e) {
-                    state.googleSheetsUrl = e.target.value;
-                });
-                elements.googleSheetsUrl.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter') loadFromUrl();
-                });
+                if (elements.googleSheetsUrl) {
+                    elements.googleSheetsUrl.addEventListener('input', function (e) {
+                        state.googleSheetsUrl = e.target.value;
+                    });
+                    elements.googleSheetsUrl.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') loadFromUrl();
+                    });
+                }
 
-                elements.closeModal.addEventListener('click', hideLoginModal);
-                elements.loginForm.addEventListener('submit', handleLogin);
+                if (elements.closeModal) elements.closeModal.addEventListener('click', hideLoginModal);
+                if (elements.loginForm) elements.loginForm.addEventListener('submit', handleLogin);
 
                 window.addEventListener('click', function (event) {
                     if (event.target === elements.loginModal) {
@@ -1281,40 +898,61 @@
                     }
                 });
 
-                elements.prevBtn.addEventListener('click', () => moveCarousel(-1));
-                elements.nextBtn.addEventListener('click', () => moveCarousel(1));
+                if (elements.prevBtn) elements.prevBtn.addEventListener('click', () => {
+                    const track = elements.techniciansCarousel;
+                    track.style.animation = 'none';
+                    track.scrollBy({ left: -280, behavior: 'smooth' });
+                });
+                if (elements.nextBtn) elements.nextBtn.addEventListener('click', () => {
+                    const track = elements.techniciansCarousel;
+                    track.style.animation = 'none';
+                    track.scrollBy({ left: 280, behavior: 'smooth' });
+                });
 
-                elements.voiceToggleBtn.addEventListener('click', toggleVoice);
+                if (elements.voiceToggleBtn) elements.voiceToggleBtn.addEventListener('click', toggleVoice);
+
+
+                const filialFilter = document.getElementById('filialFilter');
+                if (filialFilter) {
+                    filialFilter.addEventListener('change', function () {
+                        const selectedFilial = this.value;
+
+                        console.log('Filial selected:', selectedFilial);
+                    });
+                }
             }
 
             function updateTechniciansList() {
+                if (!elements.techniciansScrollContainer) return;
                 elements.techniciansScrollContainer.innerHTML = '';
 
                 state.techniciansData.forEach((tech, index) => {
                     if (!tech || !tech.name) return;
 
                     const item = document.createElement('div');
-                    item.className = 'technician-item';
+                    item.className = 'tech-list-item flex items-center justify-between p-3 rounded-lg mb-2';
+
 
                     const avatar = document.createElement('div');
-                    avatar.className = 'technician-avatar';
+                    avatar.className = 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white mr-3';
                     avatar.textContent = getInitials(tech.name);
                     avatar.style.backgroundColor = getRandomColor(tech.name);
 
+
                     const name = document.createElement('div');
-                    name.className = 'technician-name';
+                    name.className = 'flex-1 text-sm font-medium text-gray-200';
                     name.textContent = `${index + 1}. ${tech.name}`;
 
+
                     const count = document.createElement('div');
-                    count.className = 'technician-count';
+                    count.className = 'text-sm font-bold text-white mr-3';
                     count.textContent = tech.count;
 
-                    const status = document.createElement('div');
-                    status.className = 'technician-status ' + (tech.count >= state.dailyGoal ? 'status-completed' : 'status-pending');
 
-                    status.title = tech.count >= state.dailyGoal
-                        ? `Bateu a meta diária de ${state.dailyGoal} configurações!`
-                        : `Ainda não bateu a meta diária de ${state.dailyGoal} configurações`;
+                    const status = document.createElement('div');
+                    const isCompleted = tech.count >= state.dailyGoal;
+                    status.className = 'status-dot ' + (isCompleted ? 'status-success' : 'status-pending');
+                    status.title = isCompleted ? 'Meta atingida' : 'Meta pendente';
 
                     item.appendChild(avatar);
                     item.appendChild(name);
@@ -1324,144 +962,100 @@
                     elements.techniciansScrollContainer.appendChild(item);
                 });
 
-                restartScrollingAnimation();
+                applyInfiniteScroll();
             }
 
-            function restartScrollingAnimation() {
-                const scrollContainer = document.querySelector('.technicians-scroll-container');
-                scrollContainer.style.animation = 'none';
-                scrollContainer.offsetHeight;
+            function applyInfiniteScroll() {
+                const container = elements.techniciansScrollContainer;
 
-                scrollContainer.style.animation = 'scrollTechnicians 30s linear infinite';
+                const content = container.innerHTML;
+                container.innerHTML = content + content;
+
+
+                container.style.animation = 'none';
+                container.offsetHeight;
+                container.style.animation = 'scrollSmooth 60s linear infinite';
             }
 
             function setupCarousel() {
+                if (!elements.techniciansCarousel) return;
                 elements.techniciansCarousel.innerHTML = '';
                 state.carouselSlides = [];
 
                 const otherTechnicians = state.techniciansData.slice(3);
-
                 if (otherTechnicians.length === 0) return;
 
-                otherTechnicians.forEach((tech, index) => {
-                    const slide = document.createElement('div');
-                    slide.className = 'carousel-slide';
 
-                    const card = createTechnicianCard(tech, index + 4);
-                    slide.appendChild(card);
 
-                    elements.techniciansCarousel.appendChild(slide);
-                    state.carouselSlides.push(slide);
-                });
+                const createCards = () => {
+                    otherTechnicians.forEach((tech, index) => {
+                        const card = createTechnicianCard(tech, index + 4);
+                        elements.techniciansCarousel.appendChild(card);
+                    });
+                };
 
-                updateCarousel();
+                createCards();
 
-                startAutoRotate();
+                createCards();
+
+
+                const track = elements.techniciansCarousel;
+                track.style.animation = 'scrollLeft 30s linear infinite';
+
+                const totalWidth = track.scrollWidth;
+                const duration = totalWidth * 0.02;
+                track.style.animationDuration = `${duration}s`;
             }
 
             function createTechnicianCard(tech, position) {
-                const podiumColors = [
-                    'podium-purple', 'podium-blue', 'podium-green',
-                    'podium-red', 'podium-orange', 'podium-pink',
-                    'podium-teal', 'podium-indigo'
-                ];
-
                 const card = document.createElement('div');
                 card.className = 'podium-card';
 
-                const colorClass = podiumColors[position % podiumColors.length];
-                card.classList.add(colorClass);
-
                 const avatar = document.createElement('div');
-                avatar.className = 'podium-card-avatar';
+                avatar.className = 'w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white mb-3 shadow-lg';
                 avatar.textContent = getInitials(tech.name);
                 avatar.style.backgroundColor = getRandomColor(tech.name);
 
                 const name = document.createElement('div');
-                name.className = 'podium-card-name';
+                name.className = 'font-bold text-white text-lg mb-1 text-center truncate w-full';
                 name.textContent = tech.name;
 
                 const count = document.createElement('div');
-                count.className = 'podium-card-count';
-                count.textContent = `${tech.count} configuraç${tech.count !== 1 ? 'ões' : ''}`;
+                count.className = 'text-gray-400 text-sm mb-3';
+                count.textContent = `${tech.count} Configs`;
 
-                const positionEl = document.createElement('div');
-                positionEl.className = 'podium-card-position';
-                positionEl.textContent = `${position}º`;
+                const posBadge = document.createElement('div');
+                posBadge.className = 'px-3 py-1 bg-white/10 rounded-full text-xs font-bold text-indigo-300';
+                posBadge.textContent = `${position}º Lugar`;
 
                 card.appendChild(avatar);
                 card.appendChild(name);
                 card.appendChild(count);
-                card.appendChild(positionEl);
+                card.appendChild(posBadge);
 
                 return card;
             }
 
-            function moveCarousel(direction) {
-                stopAutoRotate();
-
-                const numSlides = state.carouselSlides.length;
-                if (numSlides === 0) return;
-
-                state.currentSlide = (state.currentSlide + direction + numSlides) % numSlides;
-                updateCarousel();
-
-                setTimeout(startAutoRotate, state.autoRotateTime * 2);
-            }
-
-            function updateCarousel() {
-                const track = elements.techniciansCarousel;
-                const slideWidth = track.clientWidth;
-
-                track.style.transform = `translateX(-${state.currentSlide * slideWidth}px)`;
-
-                state.carouselSlides.forEach((slide, index) => {
-                    const card = slide.querySelector('.podium-card');
-                    if (card) {
-                        if (index === state.currentSlide) {
-                            card.classList.add('active');
-                        } else {
-                            card.classList.remove('active');
-                        }
-                    }
-                });
-            }
-
-            function startAutoRotate() {
-                stopAutoRotate();
-
-                state.autoRotateInterval = setInterval(() => {
-                    moveCarousel(1);
-                }, state.autoRotateTime);
-            }
-
-            function stopAutoRotate() {
-                if (state.autoRotateInterval) {
-                    clearInterval(state.autoRotateInterval);
-                    state.autoRotateInterval = null;
-                }
-            }
-
             function showLoading(show) {
                 if (show) {
-                    elements.loadBtnText.textContent = 'Carregando...';
-                    elements.loadSpinner.classList.remove('hidden');
-                    elements.loadBtnText2.textContent = 'Carregando...';
-                    elements.loadSpinner2.classList.remove('hidden');
+                    if (elements.loadBtnText) elements.loadBtnText.textContent = 'Carregando...';
+                    if (elements.loadSpinner) elements.loadSpinner.classList.remove('hidden');
+                    if (elements.loadBtnText2) elements.loadBtnText2.textContent = 'Carregando...';
+                    if (elements.loadSpinner2) elements.loadSpinner2.classList.remove('hidden');
                 } else {
-                    elements.loadBtnText.textContent = 'Carregar Dados';
-                    elements.loadSpinner.classList.add('hidden');
-                    elements.loadBtnText2.textContent = 'Carregar Dados';
-                    elements.loadSpinner2.classList.add('hidden');
+                    if (elements.loadBtnText) elements.loadBtnText.textContent = 'Atualizar';
+                    if (elements.loadSpinner) elements.loadSpinner.classList.add('hidden');
+                    if (elements.loadBtnText2) elements.loadBtnText2.textContent = 'Carregar Exemplo';
+                    if (elements.loadSpinner2) elements.loadSpinner2.classList.add('hidden');
                 }
             }
 
             function showLoginModal() {
-                elements.loginModal.style.display = 'block';
+                elements.loginModal.classList.remove('hidden');
             }
 
             function hideLoginModal() {
-                elements.loginModal.style.display = 'none';
+                elements.loginModal.classList.add('hidden');
                 elements.loginForm.reset();
             }
 
@@ -1478,6 +1072,7 @@
             }
 
             function fireConfetti(element) {
+                if (!element) return;
                 const rect = element.getBoundingClientRect();
                 const x = (rect.left + rect.width / 2) / window.innerWidth;
                 const y = (rect.top + rect.height / 2) / window.innerHeight;
@@ -1485,89 +1080,18 @@
                 confetti({
                     particleCount: 100,
                     angle: 90,
-                    spread: 45,
+                    spread: 55,
                     origin: { x, y },
-                    colors: ['#FFD700', '#C0C0C0', '#CD7F32', '#ffffff']
+                    colors: ['#FFD700', '#C0C0C0', '#CD7F32', '#6366f1']
                 });
             }
 
             function fireConfettiForTop3() {
-                setTimeout(() => {
-                    fireConfetti(elements.firstPlaceContainer);
-                }, 0);
-
-                setTimeout(() => {
-                    fireConfetti(elements.secondPlaceContainer);
-                }, 300);
-
-                setTimeout(() => {
-                    fireConfetti(elements.thirdPlaceContainer);
-                }, 600);
+                setTimeout(() => fireConfetti(elements.firstPlaceContainer), 0);
+                setTimeout(() => fireConfetti(elements.secondPlaceContainer), 300);
+                setTimeout(() => fireConfetti(elements.thirdPlaceContainer), 600);
             }
 
-            function updateConfigurationsList(configurations, totalContext) {
-                const completed = configurations.filter(config => config.configurado && config.configurado.trim() !== '').length;
-
-                const refeito = configurations.filter(config => {
-                    if (!config.configurado) return false;
-                    const value = String(config.configurado).trim().toLowerCase();
-                    return value === 'refeito configuração' || value === 'refeito configuracao';
-                }).length;
-
-                const osAberta = configurations.filter(config => {
-                    if (!config.osAberta) return false;
-                    const value = String(config.osAberta).toLowerCase().trim();
-                    return value !== '' && value !== 'false' && value !== 'falso' && value !== '0';
-                }).length;
-
-                elements.completedCount.textContent = completed;
-                elements.pendingCount.textContent = refeito; // Agora mostra configurações refeitas
-                elements.activeTechnicians.textContent = osAberta; // Agora mostra O.S abertas
-
-                const totalBase = totalContext || state.totalConfigurations;
-
-                const progress = totalBase > 0 ? Math.round((completed / totalBase) * 100) : 0;
-
-                elements.totalProgressBar.style.width = `${progress}%`;
-                elements.totalProgressBar.textContent = `${progress}%`;
-                elements.progressDescription.textContent = `${completed} de ${totalBase} configurações concluídas`;
-            }
-
-            function startAutoUpdate() {
-                if (state.updateInterval) {
-                    clearInterval(state.updateInterval);
-                }
-                if (state.updateTimerInterval) {
-                    clearInterval(state.updateTimerInterval);
-                }
-
-                elements.updateTimer.classList.remove('hidden');
-
-                updateTimerDisplay(5 * 60);
-
-                let secondsLeft = 5 * 60;
-                state.updateTimerInterval = setInterval(() => {
-                    secondsLeft--;
-                    updateTimerDisplay(secondsLeft);
-
-                    if (secondsLeft <= 0) {
-                        clearInterval(state.updateTimerInterval);
-                        loadData();
-                    }
-                }, 1000);
-
-                state.updateInterval = setTimeout(() => {
-                    loadData();
-                }, 5 * 60 * 1000);
-
-                state.lastUpdateTime = new Date();
-            }
-
-            function updateTimerDisplay(seconds) {
-                const minutes = Math.floor(seconds / 60);
-                const remainingSeconds = seconds % 60;
-                elements.timerText.textContent = `Próxima atualização em ${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
-            }
 
             function loadData() {
                 if (!state.googleSheetsUrl) {
@@ -1583,7 +1107,6 @@
                     alert('Por favor, cole a URL do Google Sheets');
                     return;
                 }
-
                 state.googleSheetsUrl = url;
                 showLoading(true);
 
@@ -1591,174 +1114,46 @@
                     let spreadsheetId = '';
                     const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
                     spreadsheetId = match && match[1] ? match[1] : url;
-
                     const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
 
                     fetch(exportUrl)
                         .then(response => {
-                            if (!response.ok) throw new Error('Erro ao carregar a planilha. Verifique a URL e se a planilha é pública.');
+                            if (!response.ok) throw new Error('Erro ao carregar a planilha.');
                             return response.arrayBuffer();
                         })
                         .then(data => {
                             const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
                             processWorkbookNew(workbook);
                             showLoading(false);
-
                             startAutoUpdate();
                         })
                         .catch(error => {
                             alert(error.message);
-                            console.error('Error loading Google Sheets:', error);
                             showLoading(false);
                         });
                 } catch (error) {
-                    alert('Erro ao processar a URL. Verifique se é uma URL válida do Google Sheets.');
-                    console.error('Error processing Google Sheets URL:', error);
+                    alert('Erro ao processar URL');
                     showLoading(false);
                 }
             }
 
-            function processWorkbook(workbook) {
-                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
-                    alert('A planilha não contém abas.');
-                    return;
-                }
-
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                if (!worksheet) {
-                    alert('A planilha não contém dados.');
-                    return;
-                }
-
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
-
-                if (!jsonData || jsonData.length < 2) {
-                    alert('A planilha não contém dados suficientes.');
-                    return;
-                }
-
-                const headers = jsonData[0] ? jsonData[0].map(h => h ? String(h).toLowerCase().trim() : '') : [];
-                const tecnicoIndex = headers.findIndex(h => h.includes('atendente call'));
-                const configuradoIndex = headers.findIndex(h => h.includes('configurado'));
-                const filialIndex = headers.findIndex(h => h.includes('filial toledo fibra'));
-
-                if (tecnicoIndex === -1 || configuradoIndex === -1) {
-                    alert('A planilha deve conter colunas com os nomes "Atendente Call" e "Configurado"');
-                    return;
-                }
-
-                if (filialIndex === -1) {
-                    console.warn('Coluna "Filial Toledo FIbra" não encontrada. O filtro por região não funcionará.');
-                }
-
-                const dataRows = jsonData.slice(1);
-                state.rawData = [];
-                state.filiais.clear();
-
-                dataRows.forEach(row => {
-                    if (row && row.length > Math.max(tecnicoIndex, configuradoIndex)) {
-                        const tecnico = row[tecnicoIndex] ? String(row[tecnicoIndex]).trim() : null;
-                        const configurado = row[configuradoIndex] ? String(row[configuradoIndex]).trim() : null;
-
-                        if (tecnico && configurado && configurado !== '') {
-                            if (techniciansMap.has(tecnico)) {
-                                techniciansMap.set(tecnico, techniciansMap.get(tecnico) + 1);
-                            } else {
-                                techniciansMap.set(tecnico, 1);
-                            }
-                        }
-
-                        if (tecnico) {
-                            configurationsList.push({
-                                tecnico: tecnico,
-                                configurado: configurado
-                            });
-                        }
-                    }
-                });
-
-                state.techniciansData = Array.from(techniciansMap.entries())
-                    .map(([name, count]) => ({ name, count }))
-                    .sort((a, b) => b.count - a.count);
-
-                state.configurationsData = configurationsList;
-
-                updatePodium();
-            }
-
-            function updatePodium() {
-                if (!state.techniciansData || state.techniciansData.length === 0) {
-                    alert('Nenhum técnico com configurações encontrado.');
-                    return;
-                }
-
-                elements.podiumContainer.classList.remove('hidden');
-                elements.emptyState.classList.add('hidden');
-
-                const top3 = state.techniciansData.slice(0, 3);
-
-                if (top3[0]) {
-                    const first = top3[0];
-                    elements.firstPlaceName.textContent = first.name || '--';
-                    elements.firstPlaceCount.textContent = `${first.count || 0} configuraç${first.count !== 1 ? 'ões' : ''}`;
-                    elements.firstPlaceAvatar.textContent = getInitials(first.name);
-                    elements.firstPlaceAvatar.style.backgroundColor = getRandomColor(first.name);
-                }
-
-                if (top3[1]) {
-                    const second = top3[1];
-                    elements.secondPlaceName.textContent = second.name || '--';
-                    elements.secondPlaceCount.textContent = `${second.count || 0} configuraç${second.count !== 1 ? 'ões' : ''}`;
-                    elements.secondPlaceAvatar.textContent = getInitials(second.name);
-                    elements.secondPlaceAvatar.style.backgroundColor = getRandomColor(second.name);
-                }
-
-                if (top3[2]) {
-                    const third = top3[2];
-                    elements.thirdPlaceName.textContent = third.name || '--';
-                    elements.thirdPlaceCount.textContent = `${third.count || 0} configuraç${third.count !== 1 ? 'ões' : ''}`;
-                    elements.thirdPlaceAvatar.textContent = getInitials(third.name);
-                    elements.thirdPlaceAvatar.style.backgroundColor = getRandomColor(third.name);
-                }
-
-                if (state.configurationsData.length > 0) {
-                    updateConfigurationsList(state.configurationsData);
-                }
-
-                setupCarousel();
-
-                updateTechniciansList();
-
-                fireConfettiForTop3();
-            }
-
             function processWorkbookNew(workbook) {
-                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
-                    alert('A planilha não contém abas.');
-                    return;
-                }
-
+                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) return;
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                if (!worksheet) {
-                    alert('A planilha não contém dados.');
-                    return;
-                }
+                if (!worksheet) return;
 
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
-
-                if (!jsonData || jsonData.length < 2) {
-                    alert('A planilha não contém dados suficientes.');
-                    return;
-                }
+                if (!jsonData || jsonData.length < 2) return;
 
                 const headers = jsonData[0] ? jsonData[0].map(h => h ? String(h).toLowerCase().trim() : '') : [];
                 const tecnicoIndex = headers.findIndex(h => h.includes('atendente call'));
                 const configuradoIndex = headers.findIndex(h => h.includes('configurado'));
+                // Optional indexes
                 const refeitoIndex = headers.findIndex(h => h.includes('refeito'));
                 const osAbertaIndex = headers.findIndex(h => h.includes('o.s aberta') || h.includes('os aberta'));
 
                 if (tecnicoIndex === -1 || configuradoIndex === -1) {
-                    alert('A planilha deve conter colunas com os nomes "Atendente Call" e "Configurado"');
+                    alert('Colunas "Atendente Call" e "Configurado" são obrigatórias.');
                     return;
                 }
 
@@ -1772,451 +1167,329 @@
                         const refeito = refeitoIndex !== -1 && row[refeitoIndex] ? String(row[refeitoIndex]).trim() : null;
                         const osAberta = osAbertaIndex !== -1 && row[osAbertaIndex] ? String(row[osAbertaIndex]).trim() : null;
 
+
                         if (tecnico) {
-                            state.rawData.push({
-                                tecnico,
-                                configurado,
-                                refeito,
-                                osAberta
-                            });
+                            state.rawData.push({ tecnico, configurado, refeito, osAberta });
                         }
                     }
                 });
 
+
                 const techniciansMap = new Map();
                 state.rawData.forEach(item => {
-                    const { tecnico, configurado, refeito, osAberta } = item;
-
-                    if (!techniciansMap.has(tecnico)) {
-                        techniciansMap.set(tecnico, {
-                            name: tecnico,
-                            count: 0,
-                            refeito: 0,
-                            osAberta: 0
-                        });
-                    }
-
-                    const stats = techniciansMap.get(tecnico);
-
+                    const { tecnico, configurado } = item;
                     if (configurado && configurado !== '') {
-                        stats.count++;
-                    }
-
-                    if (refeito && refeito !== '') {
-                        stats.refeito++;
-                    }
-
-                    if (osAberta && osAberta !== '') {
-                        stats.osAberta++;
+                        techniciansMap.set(tecnico, (techniciansMap.get(tecnico) || 0) + 1);
+                    } else {
+                        if (!techniciansMap.has(tecnico)) techniciansMap.set(tecnico, 0);
                     }
                 });
 
-                state.techniciansData = Array.from(techniciansMap.values())
+                state.techniciansData = Array.from(techniciansMap.entries())
+                    .map(([name, count]) => ({ name, count }))
                     .sort((a, b) => b.count - a.count);
 
-                // Salvar dados no Firebase
-                saveTechniciansData(state.techniciansData).catch(err => console.error('Erro ao salvar dados automáticos:', err));
-
                 state.configurationsData = state.rawData;
-                state.totalConfigurations = 57317;
 
-                const currentTotal = state.totalConfigurations;
-                updatePodiumNew(currentTotal);
+                updatePodiumNew(state.totalConfigurations);
             }
 
             function updatePodiumNew(currentTotal) {
-                if (!state.techniciansData) {
-                    return;
-                }
+                if (!state.techniciansData) return;
 
                 checkForRankingChanges(state.techniciansData);
 
                 elements.podiumContainer.classList.remove('hidden');
+                elements.urlInputSection.classList.add('hidden');
                 elements.emptyState.classList.add('hidden');
 
                 const top3 = state.techniciansData.slice(0, 3);
 
-                [elements.firstPlaceName, elements.secondPlaceName, elements.thirdPlaceName].forEach(el => el.textContent = '--');
-                [elements.firstPlaceCount, elements.secondPlaceCount, elements.thirdPlaceCount].forEach(el => el.textContent = '0 configurações');
-                [elements.firstPlaceAvatar, elements.secondPlaceAvatar, elements.thirdPlaceAvatar].forEach(el => {
-                    el.textContent = '--';
-                    el.style.backgroundColor = '#555';
-                });
 
-                if (top3[0]) {
-                    const first = top3[0];
-                    elements.firstPlaceName.textContent = first.name || '--';
-                    elements.firstPlaceCount.textContent = `${first.count || 0} configuraç${first.count !== 1 ? 'ões' : ''}`;
-                    elements.firstPlaceAvatar.textContent = getInitials(first.name);
-                    elements.firstPlaceAvatar.style.backgroundColor = getRandomColor(first.name);
-                }
+                fillPodiumSpot(elements.firstPlaceName, elements.firstPlaceCount, elements.firstPlaceAvatar, top3[0]);
+                fillPodiumSpot(elements.secondPlaceName, elements.secondPlaceCount, elements.secondPlaceAvatar, top3[1]);
+                fillPodiumSpot(elements.thirdPlaceName, elements.thirdPlaceCount, elements.thirdPlaceAvatar, top3[2]);
 
-                if (top3[1]) {
-                    const second = top3[1];
-                    elements.secondPlaceName.textContent = second.name || '--';
-                    elements.secondPlaceCount.textContent = `${second.count || 0} configuraç${second.count !== 1 ? 'ões' : ''}`;
-                    elements.secondPlaceAvatar.textContent = getInitials(second.name);
-                    elements.secondPlaceAvatar.style.backgroundColor = getRandomColor(second.name);
-                }
-
-                if (top3[2]) {
-                    const third = top3[2];
-                    elements.thirdPlaceName.textContent = third.name || '--';
-                    elements.thirdPlaceCount.textContent = `${third.count || 0} configuraç${third.count !== 1 ? 'ões' : ''}`;
-                    elements.thirdPlaceAvatar.textContent = getInitials(third.name);
-                    elements.thirdPlaceAvatar.style.backgroundColor = getRandomColor(third.name);
-                }
-
-                updateConfigurationsList(state.configurationsData, currentTotal);
-
+                updateStats(state.configurationsData, currentTotal);
                 setupCarousel();
                 updateTechniciansList();
                 fireConfettiForTop3();
             }
 
+            function fillPodiumSpot(nameEl, countEl, avatarEl, tech) {
+                if (tech) {
+                    nameEl.textContent = tech.name;
+                    countEl.textContent = `${tech.count} configs`;
+                    avatarEl.textContent = getInitials(tech.name);
+                    avatarEl.style.backgroundColor = getRandomColor(tech.name);
+                } else {
+                    nameEl.textContent = '--';
+                    countEl.textContent = '0 configs';
+                    avatarEl.textContent = '--';
+                    avatarEl.style.backgroundColor = '#555';
+                }
+            }
+
+            function updateStats(configurations, totalContext) {
+                const completed = configurations.filter(c => c.configurado && c.configurado.trim() !== '').length;
+                const refeito = configurations.filter(c => c.configurado && String(c.configurado).toLowerCase().includes('refeito')).length;
+                const osAberta = configurations.filter(c => c.osAberta && c.osAberta !== 'false' && c.osAberta !== '0').length;
+
+                elements.completedCount.textContent = completed;
+                elements.pendingCount.textContent = refeito;
+                elements.activeTechnicians.textContent = osAberta;
+
+                const progress = totalContext > 0 ? Math.round((completed / totalContext) * 100) : 0;
+                elements.totalProgressBar.style.width = `${progress}%`;
+                elements.progressDescription.textContent = `${completed.toLocaleString()} / ${totalContext.toLocaleString()} (${progress}%)`;
+            }
+
+
             function getInitials(name) {
                 if (!name) return '--';
-
                 const parts = name.split(' ');
-                if (parts.length >= 2) {
-                    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-                } else if (name.length >= 2) {
-                    return name.substring(0, 2).toUpperCase();
-                }
-                return name.substring(0, 1).toUpperCase();
+                if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                return name.substring(0, 2).toUpperCase();
             }
 
             function getRandomColor(name) {
                 if (!name) return '#999';
-
                 let hash = 0;
-                for (let i = 0; i < name.length; i++) {
-                    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-                }
-
-                const h = hash % 360;
-                return `hsl(${h}, 70%, 60%)`;
+                for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                return `hsl(${hash % 360}, 70%, 60%)`;
             }
 
-            initEventListeners();
-            initWiFiSymbol();
+
+            function startAutoUpdate() {
+                if (state.updateInterval) clearInterval(state.updateInterval);
+                if (state.updateTimerInterval) clearInterval(state.updateTimerInterval);
+
+                elements.updateTimer.classList.remove('hidden');
+                let secondsLeft = 5 * 60;
+                updateTimerDisplay(secondsLeft);
+
+                state.updateTimerInterval = setInterval(() => {
+                    secondsLeft--;
+                    updateTimerDisplay(secondsLeft);
+                    if (secondsLeft <= 0) {
+                        clearInterval(state.updateTimerInterval);
+                        loadData();
+                    }
+                }, 1000);
+
+                state.updateInterval = setTimeout(loadData, 5 * 60 * 1000);
+            }
+
+            function updateTimerDisplay(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const rm = seconds % 60;
+                if (elements.timerText) elements.timerText.textContent = `${minutes}:${rm < 10 ? '0' : ''}${rm}`;
+            }
+
 
             function toggleVoice() {
                 state.voiceEnabled = !state.voiceEnabled;
                 updateVoiceUI();
-
-                if (state.voiceEnabled) {
-                    speak('Sistema de voz ativado.');
-                }
+                if (state.voiceEnabled) speak('Voz ativada.');
             }
 
             function updateVoiceUI() {
                 if (state.voiceEnabled) {
-                    elements.voiceIcon.className = 'fas fa-volume-up mr-2';
+                    elements.voiceIcon.className = 'fas fa-volume-up';
                     elements.voiceBtnText.textContent = 'Voz: On';
-                    elements.voiceToggleBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-                    elements.voiceToggleBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+                    elements.voiceToggleBtn.classList.remove('bg-gray-800/50');
+                    elements.voiceToggleBtn.classList.add('bg-emerald-600', 'text-white');
                 } else {
-                    elements.voiceIcon.className = 'fas fa-volume-mute mr-2';
+                    elements.voiceIcon.className = 'fas fa-volume-mute';
                     elements.voiceBtnText.textContent = 'Voz: Off';
-                    elements.voiceToggleBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
-                    elements.voiceToggleBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+                    elements.voiceToggleBtn.classList.add('bg-gray-800/50');
+                    elements.voiceToggleBtn.classList.remove('bg-emerald-600', 'text-white');
                 }
             }
 
             function speak(text) {
                 if (!window.speechSynthesis) return;
-
                 window.speechSynthesis.cancel();
-
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'pt-BR';
-                utterance.rate = 1.1;
-                utterance.pitch = 1;
-
                 window.speechSynthesis.speak(utterance);
             }
 
             function checkForRankingChanges(newTechniciansData) {
-                if (!state.voiceEnabled || !state.previousRankings.size) {
-                    updatePreviousRankings(newTechniciansData);
-                    return;
-                }
-
-                let overtakes = [];
-
-                for (let i = 0; i < newTechniciansData.length; i++) {
-                    const tech = newTechniciansData[i];
-                    const currentRank = i + 1;
-                    const previousRank = state.previousRankings.get(tech.name);
-
-                    if (previousRank && currentRank < previousRank) {
-                        if (i + 1 < newTechniciansData.length) {
-                            const techBelow = newTechniciansData[i + 1];
-                            const prevRankBelow = state.previousRankings.get(techBelow.name);
-
-                            if (prevRankBelow && prevRankBelow < previousRank) {
-                                overtakes.push(`${tech.name} passou ${techBelow.name} no rank.`);
+                if (state.previousRankings.size > 0) {
+                    newTechniciansData.forEach((tech, index) => {
+                        const currentRank = index + 1;
+                        if (state.previousRankings.has(tech.name)) {
+                            const prevRank = state.previousRankings.get(tech.name);
+                            // If rank improved (number got smaller) e.g. 5 -> 3
+                            if (currentRank < prevRank) {
+                                queueNotification({
+                                    name: tech.name,
+                                    oldRank: prevRank,
+                                    newRank: currentRank,
+                                    count: tech.count,
+                                    diff: prevRank - currentRank
+                                });
                             }
                         }
-                    }
-                }
-
-                if (overtakes.length > 0) {
-                    speak(overtakes[0]);
+                    });
                 }
 
                 updatePreviousRankings(newTechniciansData);
             }
 
-            function updatePreviousRankings(techniciansData) {
+            function updatePreviousRankings(techData) {
                 state.previousRankings.clear();
-                techniciansData.forEach((tech, index) => {
-                    state.previousRankings.set(tech.name, index + 1);
+                techData.forEach((tech, index) => state.previousRankings.set(tech.name, index + 1));
+            }
+
+            function queueNotification(data) {
+                state.notificationQueue.push(data);
+                processNotificationQueue();
+            }
+
+            function processNotificationQueue() {
+                if (state.isShowingNotification || state.notificationQueue.length === 0) return;
+
+                const data = state.notificationQueue.shift();
+                state.isShowingNotification = true;
+                showRankNotification(data);
+            }
+
+            function showRankNotification(data) {
+                const container = document.getElementById('rankNotificationContainer');
+                if (!container) return;
+
+                const card = document.createElement('div');
+                card.className = 'notification-card';
+
+                // Sound effect (optional)
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'); // Simple ding
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log('Audio play failed', e));
+
+                card.innerHTML = `
+                    <div class="notification-shimmer"></div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full border-2 border-amber-400 flex items-center justify-center text-sm font-bold text-white bg-gray-800 shrink-0">
+                            ${getInitials(data.name)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-amber-400 font-bold text-sm uppercase tracking-wider mb-0.5">Subiu no Ranking! 🚀</h4>
+                            <div class="text-white font-semibold truncate text-lg">${data.name}</div>
+                            <div class="text-indigo-300 text-xs">
+                                #${data.oldRank} <i class="fas fa-arrow-right mx-1 text-gray-500"></i> <span class="text-white font-bold text-base">#${data.newRank}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+
+                // Slide In
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        card.classList.add('show');
+                    });
                 });
+
+                // Duration then Slide Out left
+                setTimeout(() => {
+                    card.classList.remove('show');
+                    card.classList.add('hide'); // Slide left logic
+
+                    // Remove after animation
+                    setTimeout(() => {
+                        card.remove();
+                        state.isShowingNotification = false;
+                        processNotificationQueue(); // Next
+                    }, 500); // Wait for transition
+                }, 60000); // 1 minute display
             }
 
-            window.addEventListener('resize', () => {
-                if (state.carouselSlides.length > 0) {
-                    updateCarousel();
-                }
-            });
+            function updatePreviousRankings(techData) {
+                state.previousRankings.clear();
+                techData.forEach((tech, index) => state.previousRankings.set(tech.name, index + 1));
+            }
+
+
+            initEventListeners();
+            initWiFiSymbol();
         });
-    </script>
 
-    <!-- Firebase SDK - Firestore -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
-    <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
-
-    <div id="maintenanceOverlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="text-align: center; color: white; max-width: 600px; padding: 40px;">
-            <div style="font-size: 80px; margin-bottom: 30px; animation: rotate 3s linear infinite;">⚙️</div>
-            <div style="font-size: 36px; margin-bottom: 20px; font-weight: bold;" id="maintenanceTitle">Sistema em
-                Manutenção</div>
-            <div style="font-size: 18px; line-height: 1.6; color: #ccc;" id="maintenanceMessage">
-                Estamos realizando melhorias no sistema. Por favor, aguarde alguns instantes.
-            </div>
-        </div>
-    </div>
-
-    <!-- Alert Modal -->
-    <div id="alertModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 10000; justify-content: center; align-items: center;">
-        <div
-            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 40px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); animation: modalSlideIn 0.4s ease; position: relative;">
-            <button onclick="closeAlertModal()"
-                style="position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.2); border: none; color: white; font-size: 24px; cursor: pointer; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
-                ×
-            </button>
-            <div style="text-align: center; color: white;">
-                <div style="font-size: 60px; margin-bottom: 20px;">🔔</div>
-                <h2 id="alertModalTitle" style="font-size: 28px; margin-bottom: 15px; font-weight: bold;">Atenção</h2>
-                <p id="alertModalMessage" style="font-size: 18px; line-height: 1.6; margin-bottom: 30px;">Mensagem de
-                    alerta</p>
-                <button onclick="closeAlertModal()"
-                    style="background: white; color: #667eea; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
-                    OK, Entendi
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px) scale(0.9);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        #alertModal button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-    </style>
-
-    <script>
         let isFirebaseConnected = false;
-
         window.addEventListener('load', () => {
-            console.log('🔥 Inicializando Firebase para controle de manutenção...');
-
-            if (initFirebase()) {
+            if (typeof initFirebase === 'function' && initFirebase()) {
                 isFirebaseConnected = true;
-                console.log('✅ Firebase conectado! Monitorando status de manutenção...');
-
+                console.log('Firebase conectado.');
                 listenToPageStatus((data) => {
-                    console.log('📥 Status recebido do Firebase:', data);
-
                     if (data) {
                         checkMaintenanceMode(data);
                         handleRemoteCommands(data);
                     }
                 });
-            } else {
-                console.warn('⚠️ Firebase não conectado. Modo de manutenção não disponível.');
             }
         });
 
-        let lastAlertTimestamp = 0;
-        let lastSpreadsheetTimestamp = 0;
 
         function checkMaintenanceMode(data) {
             const overlay = document.getElementById('maintenanceOverlay');
-
+            if (!overlay) return;
             if (data.maintenance) {
-                overlay.style.display = 'flex';
-
-                const title = document.getElementById('maintenanceTitle');
-                const message = document.getElementById('maintenanceMessage');
-
-                title.textContent = data.title || 'Sistema em Manutenção';
-                message.textContent = data.message || 'Estamos realizando melhorias no sistema. Por favor, aguarde alguns instantes.';
-
-                console.log('🔧 Modo manutenção ATIVADO');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+                if (data.title) document.getElementById('maintenanceTitle').textContent = data.title;
+                if (data.message) document.getElementById('maintenanceMessage').textContent = data.message;
             } else {
-                overlay.style.display = 'none';
-                console.log('✅ Modo manutenção DESATIVADO');
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
             }
         }
 
+        let lastSpreadsheetTimestamp = 0;
         function handleRemoteCommands(data) {
-            if (data.loadSpreadsheet && data.spreadsheetUrl && data.timestamp) {
-                if (data.timestamp > lastSpreadsheetTimestamp) {
-                    lastSpreadsheetTimestamp = data.timestamp;
 
-                    console.log('📥 Comando recebido: Carregar planilha', data.spreadsheetUrl);
-
-                    const urlInput = document.getElementById('googleSheetsUrl');
-                    if (urlInput) {
-                        urlInput.value = data.spreadsheetUrl;
-
-                        const loadBtn = document.getElementById('loadFromUrlBtn');
-                        if (loadBtn) {
-                            loadBtn.click();
-                            console.log('✅ Planilha carregada automaticamente!');
-                        }
-                    }
+            if (data.loadSpreadsheet && data.spreadsheetUrl && data.timestamp > lastSpreadsheetTimestamp) {
+                lastSpreadsheetTimestamp = data.timestamp;
+                const urlInput = document.getElementById('googleSheetsUrl');
+                if (urlInput) {
+                    urlInput.value = data.spreadsheetUrl;
+                    const btn = document.getElementById('loadFromUrlBtn');
+                    if (btn) btn.click();
                 }
             }
 
-            if (data.showAlert && data.alertMessage && data.alertTimestamp) {
-                const displayedAlerts = JSON.parse(localStorage.getItem('displayedAlerts') || '[]');
-
-                if (!displayedAlerts.includes(data.alertTimestamp)) {
-                    console.log('🔔 Comando recebido: Mostrar alerta', data.alertMessage);
-
+            // Alert logic restored
+            if (data.showAlert && data.alertMessage) {
+                // Simplified alert check to avoid spam
+                const stamp = data.alertTimestamp || Date.now();
+                const stored = JSON.parse(localStorage.getItem('seenAlerts') || '[]');
+                if (!stored.includes(stamp)) {
                     showAlertModal(data.alertTitle || 'Atenção', data.alertMessage, data.alertDuration || 0);
-
-                    displayedAlerts.push(data.alertTimestamp);
-
-                    if (displayedAlerts.length > 50) {
-                        displayedAlerts.shift();
-                    }
-
-                    localStorage.setItem('displayedAlerts', JSON.stringify(displayedAlerts));
-                } else {
-                    console.log('ℹ️ Alerta já foi exibido anteriormente, ignorando...');
+                    stored.push(stamp);
+                    if (stored.length > 20) stored.shift();
+                    localStorage.setItem('seenAlerts', JSON.stringify(stored));
                 }
             }
         }
 
-        let alertCloseTimer = null;
-        let alertCountdownInterval = null;
-
-        // Mostrar modal de alerta
-        function showAlertModal(title, message, duration = 0) {
+        let alertTimer = null;
+        function showAlertModal(title, msg, duration) {
             const modal = document.getElementById('alertModal');
-            const modalTitle = document.getElementById('alertModalTitle');
-            const modalMessage = document.getElementById('alertModalMessage');
-            const okButton = modal.querySelector('button[onclick="closeAlertModal()"]');
+            document.getElementById('alertModalTitle').textContent = title;
+            document.getElementById('alertModalMessage').textContent = msg;
 
-            if (modal && modalTitle && modalMessage) {
-                modalTitle.textContent = title;
-                modalMessage.textContent = message;
-                modal.style.display = 'flex';
+            modal.classList.remove('hidden');
 
-                if (alertCloseTimer) clearTimeout(alertCloseTimer);
-                if (alertCountdownInterval) clearInterval(alertCountdownInterval);
-
-                // Se duração > 0, configurar auto-close
-                if (duration > 0) {
-                    const durationMs = duration * 60 * 1000; // Converter minutos para ms
-                    let remainingSeconds = duration * 60;
-
-                    // Atualizar texto do botão com countdown
-                    const updateButtonText = () => {
-                        const minutes = Math.floor(remainingSeconds / 60);
-                        const seconds = remainingSeconds % 60;
-                        okButton.textContent = `OK (Fecha em ${minutes}:${seconds.toString().padStart(2, '0')})`;
-                    };
-
-                    updateButtonText();
-
-                    // Countdown a cada segundo
-                    alertCountdownInterval = setInterval(() => {
-                        remainingSeconds--;
-                        if (remainingSeconds > 0) {
-                            updateButtonText();
-                        } else {
-                            clearInterval(alertCountdownInterval);
-                        }
-                    }, 1000);
-
-                    // Fechar automaticamente após a duração
-                    alertCloseTimer = setTimeout(() => {
-                        closeAlertModal();
-                    }, durationMs);
-
-                    console.log(`✅ Alerta exibido: ${title} (Auto-close em ${duration} min)`);
-                } else {
-                    okButton.textContent = 'OK, Entendi';
-                    console.log(`✅ Alerta exibido: ${title} (Até clicar OK)`);
-                }
+            if (duration > 0) {
+                if (alertTimer) clearTimeout(alertTimer);
+                alertTimer = setTimeout(closeAlertModal, duration * 60000);
             }
         }
 
-        // Fechar modal de alerta
         function closeAlertModal() {
-            const modal = document.getElementById('alertModal');
-            const okButton = modal.querySelector('button[onclick="closeAlertModal()"]');
-
-            if (modal) {
-                modal.style.display = 'none';
-
-                if (alertCloseTimer) {
-                    clearTimeout(alertCloseTimer);
-                    alertCloseTimer = null;
-                }
-                if (alertCountdownInterval) {
-                    clearInterval(alertCountdownInterval);
-                    alertCountdownInterval = null;
-                }
-
-                // Resetar texto do botão
-                if (okButton) {
-                    okButton.textContent = 'OK, Entendi';
-                }
-            }
+            document.getElementById('alertModal').classList.add('hidden');
         }
     </script>
 </body>
