@@ -110,59 +110,10 @@ function listenToPageStatus(callback) {
 }
 
 
-
 function stopListening() {
     if (unsubscribe) {
         unsubscribe();
         unsubscribe = null;
         console.log('🔇 Listener desconectado');
-    }
-}
-
-/**
- * Salva os dados dos técnicos no Firestore
- * @param {Array} techniciansData 
- * @returns {Promise}
- */
-async function saveTechniciansData(techniciansData) {
-    try {
-        const batch = db.batch();
-        const techniciansRef = db.collection('technicians');
-
-        // Opcional: Limpar coleção antiga ou apenas atualizar documentos
-        // Para simplificar e garantir dados limpos, vamos atualizar documento por documento
-        // Mas para evitar muitas escritas, podemos salvar tudo em um único documento JSON se não for muito grande
-        // OU salvar cada técnico como um documento. Dado o requisito de "perfil", documento por técnico é melhor.
-        
-        // Vamos usar um documento único 'summary' para a lista completa para facilitar leitura rápida
-        // E documentos individuais se precisarmos de histórico futuro, mas por enquanto vamos salvar tudo no 'currentData'
-        
-        await db.collection('stats').doc('technicians_current').set({
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            data: techniciansData
-        });
-
-        console.log('✅ Dados dos técnicos salvos no Firestore!');
-        return true;
-    } catch (error) {
-        console.error('❌ Erro ao salvar dados dos técnicos:', error);
-        throw error;
-    }
-}
-
-/**
- * Obtém os dados dos técnicos do Firestore
- * @returns {Promise<Array>}
- */
-async function getTechniciansData() {
-    try {
-        const doc = await db.collection('stats').doc('technicians_current').get();
-        if (doc.exists) {
-            return doc.data().data || [];
-        }
-        return [];
-    } catch (error) {
-        console.error('❌ Erro ao obter dados dos técnicos:', error);
-        return [];
     }
 }

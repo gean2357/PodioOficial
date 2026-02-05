@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Configurações - Filiais</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark-bg: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        h1,
+        h2,
+        h3,
+        .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 16px;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-neon {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #7c3aed, #4f46e5);
+            z-index: -1;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        .btn-neon:hover::before {
+            opacity: 1;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Accordion Styles */
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .accordion-item.active .accordion-content {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-item.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .category-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .badge-configurado {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-sem-acesso {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-refeito {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-tudo-certo {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-inadimplente {
+            background: rgba(236, 72, 153, 0.2);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="relative w-full z-50 glass-panel border-t-0 border-x-0 rounded-none bg-opacity-80">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="hover:opacity-80 transition-opacity">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                        <i class="fas fa-network-wired text-white text-lg"></i>
+                    </div>
+                </a>
+                <h1 class="text-2xl font-bold tracking-tight text-white">
+                    Painel de <span class="text-indigo-400">Configurações</span>
+                </h1>
+            </div>
+
+            <div class="flex gap-4 items-center">
+                <button id="loadDataBtn"
+                    class="btn-neon px-5 py-2 rounded-lg text-white font-semibold text-sm shadow-lg flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    <span id="loadBtnText">Atualizar Dados</span>
+                    <span id="loadSpinner" class="spinner hidden"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+
+        <!-- URL Input Section -->
+        <div class="glass-panel p-6 mb-8 max-w-4xl mx-auto">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+                <div class="flex-1 w-full">
+                    <label class="block text-xs font-semibold text-indigo-300 uppercase tracking-wider mb-2">URL do
+                        Google Sheets</label>
+                    <div class="relative">
+                        <i class="fas fa-link absolute left-4 top-3.5 text-gray-500"></i>
+                        <input type="text" id="googleSheetsUrl" placeholder="Cole sua URL pública aqui..."
+                            class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-200 outline-none transition-all placeholder-gray-600">
+                    </div>
+                </div>
+                <button id="loadFromUrlBtn"
+                    class="w-full md:w-auto px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-medium border border-gray-700 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-cloud-download-alt text-indigo-400"></i>
+                    Carregar
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Container -->
+        <div id="contentContainer" class="hidden">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+                <div class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                    <span class="text-gray-400 text-xs uppercase tracking-wider">Total Filiais</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalFiliais">0</span>
+                </div>
+                <div
+                    class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center border-emerald-500/30">
+                    <span class="text-emerald-400 text-xs uppercase tracking-wider">Configurados</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalConfigurado">0</span>
+                </div>
+                <div
+                    class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center border-blue-500/30">
+                    <span class="text-blue-400 text-xs uppercase tracking-wider">Tudo Certo</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalTudoCerto">0</span>
+                </div>
+                <div
+                    class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center border-amber-500/30">
+                    <span class="text-amber-400 text-xs uppercase tracking-wider">Refeitos</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalRefeito">0</span>
+                </div>
+                <div
+                    class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center border-red-500/30">
+                    <span class="text-red-400 text-xs uppercase tracking-wider">Sem Acesso</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalSemAcesso">0</span>
+                </div>
+                <div
+                    class="glass-card p-4 rounded-xl flex flex-col items-center justify-center text-center border-pink-500/30">
+                    <span class="text-pink-400 text-xs uppercase tracking-wider">Inadimplentes</span>
+                    <span class="text-3xl font-bold text-white mt-1" id="totalInadimplente">0</span>
+                </div>
+            </div>
+
+            <!-- Filiais List -->
+            <div id="filiaisList" class="space-y-4 max-w-5xl mx-auto">
+                <!-- Items will be injected here -->
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-20">
+            <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-clipboard-list text-3xl text-gray-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Nenhum dado carregado</h2>
+            <p class="text-gray-400">Insira a URL da planilha para visualizar os dados por filial.</p>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-8 text-gray-600 text-sm mt-auto">
+        <p>&copy; 2024 Podio dos Técnicos. Toledo Fibra.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const elements = {
+                googleSheetsUrl: document.getElementById('googleSheetsUrl'),
+                loadFromUrlBtn: document.getElementById('loadFromUrlBtn'),
+                loadDataBtn: document.getElementById('loadDataBtn'),
+                loadBtnText: document.getElementById('loadBtnText'),
+                loadSpinner: document.getElementById('loadSpinner'),
+                contentContainer: document.getElementById('contentContainer'),
+                emptyState: document.getElementById('emptyState'),
+                filiaisList: document.getElementById('filiaisList'),
+                totalFiliais: document.getElementById('totalFiliais'),
+                totalConfigurado: document.getElementById('totalConfigurado'),
+                totalConfigurado: document.getElementById('totalConfigurado'),
+                totalTudoCerto: document.getElementById('totalTudoCerto'),
+                totalRefeito: document.getElementById('totalRefeito'),
+                totalSemAcesso: document.getElementById('totalSemAcesso'),
+                totalInadimplente: document.getElementById('totalInadimplente')
+            };
+
+            // Global State
+            let rawData = [];
+            let groupedData = {};
+
+            // Initialize
+            const savedUrl = localStorage.getItem('googleSheetsUrl'); // Try to reuse if possible, or just expect user input
+            if (savedUrl) elements.googleSheetsUrl.value = savedUrl;
+
+            // Event Listeners
+            elements.loadFromUrlBtn.addEventListener('click', loadData);
+            elements.loadDataBtn.addEventListener('click', loadData);
+
+            function showLoading(isLoading) {
+                if (isLoading) {
+                    elements.loadBtnText.textContent = 'Carregando...';
+                    elements.loadSpinner.classList.remove('hidden');
+                    elements.contentContainer.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    elements.loadBtnText.textContent = 'Atualizar Dados';
+                    elements.loadSpinner.classList.add('hidden');
+                    elements.contentContainer.classList.remove('opacity-50', 'pointer-events-none');
+                }
+            }
+
+            function loadData() {
+                const url = elements.googleSheetsUrl.value.trim();
+                if (!url) {
+                    alert('Por favor, insira a URL do Google Sheets.');
+                    return;
+                }
+
+                // Save URL for convenience
+                localStorage.setItem('googleSheetsUrl', url);
+
+                showLoading(true);
+
+                try {
+                    let spreadsheetId = '';
+                    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                    spreadsheetId = match && match[1] ? match[1] : url;
+                    const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=xlsx`;
+
+                    fetch(exportUrl)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Erro ao carregar a planilha.');
+                            return response.arrayBuffer();
+                        })
+                        .then(data => {
+                            const workbook = XLSX.read(new Uint8Array(data), { type: 'array' });
+                            processData(workbook);
+                            showLoading(false);
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            alert('Erro ao carregar dados: ' + error.message);
+                            showLoading(false);
+                        });
+                } catch (error) {
+                    alert('URL inválida.');
+                    showLoading(false);
+                }
+            }
+
+            function processData(workbook) {
+                if (!workbook.SheetNames.length) return;
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+                if (jsonData.length < 2) {
+                    alert('Planilha vazia ou formato inválido.');
+                    return;
+                }
+
+                // Headers processing
+                const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
+
+                // Find Columns
+                // Looking for "Filial" or "Filial Toledo Fibra"
+                const filialIndex = headers.findIndex(h => h.includes('filial'));
+                const atendenteIndex = headers.findIndex(h => h.includes('atendente call'));
+                const statusIndex = headers.findIndex(h => h.includes('configurado')); // Assuming status is in 'Configurado' col or similar
+                const cadastroIndex = headers.findIndex(h => h.includes('cadastro'));
+
+                if (filialIndex === -1 || atendenteIndex === -1 || statusIndex === -1) {
+                    alert('Colunas obrigatórias não encontradas: "Filial", "Atendente Call" e "Configurado".');
+                    return;
+                }
+
+                // Process Rows
+                const rows = jsonData.slice(1);
+                const filiaisMap = {};
+
+                let totals = {
+                    configurado: 0,
+                    refeito: 0,
+                    semAcesso: 0,
+                    inadimplente: 0,
+                    tudoCerto: 0
+                };
+
+                rows.forEach(row => {
+                    const filial = row[filialIndex] ? String(row[filialIndex]).trim() : 'Sem Filial';
+                    const atendente = row[atendenteIndex] ? String(row[atendenteIndex]).trim() : 'Desconhecido';
+                    const statusRaw = row[statusIndex] ? String(row[statusIndex]).trim().toLowerCase() : '';
+                    const cadastroRaw = (cadastroIndex !== -1 && row[cadastroIndex]) ? String(row[cadastroIndex]).trim().toLowerCase() : '';
+
+                    if (!filiaisMap[filial]) {
+                        filiaisMap[filial] = {
+                            total: 0,
+                            attendants: {}
+                        };
+                    }
+
+                    if (!filiaisMap[filial].attendants[atendente]) {
+                        filiaisMap[filial].attendants[atendente] = {
+                            total: 0,
+                            configurado: 0,
+                            refeito: 0,
+                            semAcesso: 0,
+                            inadimplente: 0,
+                            tudoCerto: 0
+                        };
+                    }
+
+                    // Categorization Logic
+                    let category = 'other';
+
+                    // Check Cadastro column first for Inadimplente
+                    if (cadastroRaw.includes('inadimplente')) {
+                        category = 'inadimplente';
+                        totals.inadimplente++;
+                    }
+                    // Fallback to Configurado column for everything else including Tudo Certo
+                    else if (statusRaw.includes('sem acesso')) {
+                        category = 'semAcesso';
+                        totals.semAcesso++;
+                    } else if (statusRaw.includes('certo')) {
+                        category = 'tudoCerto';
+                        totals.tudoCerto++;
+                    } else if (statusRaw.includes('refeito')) {
+                        category = 'refeito';
+                        totals.refeito++;
+                    } else if (statusRaw.includes('configurado') || statusRaw === 'ok') {
+                        // Fallback if just 'configurado' is text, or treat as generic success
+                        category = 'configurado';
+                        totals.configurado++;
+                    }
+
+                    filiaisMap[filial].total++;
+                    filiaisMap[filial].attendants[atendente].total++;
+                    if (category !== 'other') {
+                        filiaisMap[filial].attendants[atendente][category]++;
+                    }
+                });
+
+                renderUI(filiaisMap, totals);
+            }
+
+            function renderUI(data, totals) {
+                elements.emptyState.classList.add('hidden');
+                elements.contentContainer.classList.remove('hidden');
+
+                // Update Header Stats
+                elements.totalFiliais.textContent = Object.keys(data).length;
+                elements.totalConfigurado.textContent = totals.configurado + totals.tudoCerto; // Grouping 'tudo certo' with configurado for general stat? Or separate? 
+                // User asked for "separar em categorias ... e tudo certo". 
+                // Let's display specific totals on cards. I'll stick to the ID's I made.
+                elements.totalConfigurado.textContent = totals.configurado;
+                // Maybe I should add a card for "Tudo Certo" if it's significant, or merge. 
+                // For now I'll just map totals.configurado -> Configurado
+
+                // Let's dynamically add a card for 'Tudo Certo' if we want, or just update the DOM if I missed it in HTML.
+                // Assuming 'Configurado' is the generic success, I'll count 'tudo certo' as 'configurado' for the top stats or show 4 cards?
+                // I have 4 cards in HTML: Filiais, Configurado, Refeito, Sem Acesso.
+                elements.totalConfigurado.textContent = totals.configurado;
+                elements.totalTudoCerto.textContent = totals.tudoCerto;
+                elements.totalRefeito.textContent = totals.refeito;
+                elements.totalSemAcesso.textContent = totals.semAcesso;
+                elements.totalInadimplente.textContent = totals.inadimplente;
+
+
+                elements.filiaisList.innerHTML = '';
+
+                // Sort Filiais by name
+                const sortedFiliais = Object.keys(data).sort();
+
+                sortedFiliais.forEach(filialName => {
+                    const branchData = data[filialName];
+                    const branchCard = document.createElement('div');
+                    branchCard.className = 'glass-card rounded-xl overflow-hidden accordion-item';
+
+                    // Header
+                    branchCard.innerHTML = `
+                        <div class="p-5 cursor-pointer flex items-center justify-between hover:bg-white/5 transition-colors" onclick="toggleAccordion(this)">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg text-white">${filialName}</h3>
+                                    <p class="text-sm text-gray-400">${branchData.total} registros</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-500 accordion-icon"></i>
+                        </div>
+                        <div class="accordion-content bg-gray-900/30">
+                            <div class="p-5 border-t border-gray-700/50">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="text-xs text-gray-500 uppercase border-b border-gray-700/50">
+                                                <th class="py-3 pl-2">Atendente</th>
+                                                <th class="py-3 text-center">Configurado</th>
+                                                <th class="py-3 text-center">Tudo Certo</th>
+                                                <th class="py-3 text-center">Refeito</th>
+                                                <th class="py-3 text-center">Sem Acesso</th>
+                                                <th class="py-3 text-center">Inadimplente</th>
+                                                <th class="py-3 text-right pr-2">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-sm">
+                                            ${renderAttendantsRows(branchData.attendants)}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    elements.filiaisList.appendChild(branchCard);
+                });
+            }
+
+            function renderAttendantsRows(attendants) {
+                // Sort by total desc
+                return Object.entries(attendants)
+                    .sort(([, a], [, b]) => b.total - a.total)
+                    .map(([name, stats]) => `
+                        <tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
+                            <td class="py-3 pl-2 font-medium text-gray-200">${name}</td>
+                            <td class="py-3 text-center">
+                                ${stats.configurado > 0 ? `<span class="category-badge badge-configurado">${stats.configurado}</span>` : '-'}
+                            </td>
+                            <td class="py-3 text-center">
+                                ${stats.tudoCerto > 0 ? `<span class="category-badge badge-tudo-certo">${stats.tudoCerto}</span>` : '-'}
+                            </td>
+                            <td class="py-3 text-center">
+                                ${stats.refeito > 0 ? `<span class="category-badge badge-refeito">${stats.refeito}</span>` : '-'}
+                            </td>
+                            <td class="py-3 text-center">
+                                ${stats.semAcesso > 0 ? `<span class="category-badge badge-sem-acesso">${stats.semAcesso}</span>` : '-'}
+                            </td>
+                            <td class="py-3 text-center">
+                                ${stats.inadimplente > 0 ? `<span class="category-badge badge-inadimplente">${stats.inadimplente}</span>` : '-'}
+                            </td>
+                            <td class="py-3 text-right pr-2 font-bold text-white">${stats.total}</td>
+                        </tr>
+                    `).join('');
+            }
+
+            // Expose toggle function globally
+            window.toggleAccordion = function (element) {
+                const item = element.parentElement;
+                const wasActive = item.classList.contains('active');
+
+                // Close others (optional - currently allowing multiple open)
+                // document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+
+                if (!wasActive) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            };
+        });
+    </script>
+</body>
+
+</html>
